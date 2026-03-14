@@ -27,6 +27,15 @@ import { closerBrain } from './agents/sales/closer-brain.js';
 import { leadQualifierBrain } from './agents/sales/lead-qualifier-brain.js';
 import { followUpBrain } from './agents/sales/follow-up-brain.js';
 import { proposalBrain } from './agents/sales/proposal-brain.js';
+import { creativeDirectorBrain } from './agents/creative/director-brain.js';
+import { designerBrain } from './agents/creative/designer-brain.js';
+import { videoBrain } from './agents/creative/video-brain.js';
+import { socialBrain } from './agents/creative/social-brain.js';
+import { copywriterBrain } from './agents/creative/copywriter-brain.js';
+import { brandVault } from './core/brand-vault.js';
+import { contentCalendar } from './core/content-calendar.js';
+import { scheduler } from './core/scheduler.js';
+import { createDashboardServer } from './dashboard/server.js';
 
 const AGENT_ID = 'nikita';
 
@@ -153,6 +162,10 @@ function printStartupSummary(bootCount, cfoEvaluation, csuiteAgents = {}) {
   console.log(`  Skill Teacher ....... OK`);
   console.log(`  Nikita Brain ........ OK`);
   console.log(`  C-Suite Agents ...... OK  (${csuiteCount}/3 loaded)`);
+  console.log(`  Brand Vault ......... OK`);
+  console.log(`  Content Calendar .... OK`);
+  console.log(`  Scheduler ........... OK  (${scheduler.listSchedules().length} schedules)`);
+  console.log(`  Dashboard ........... OK  (port 3001)`);
   console.log(`  Agent Registry ...... OK  (${agentRegistry.list().length} registered)`);
   console.log('----------------------------------------');
   console.log('  C-Suite:');
@@ -187,6 +200,19 @@ function printStartupSummary(bootCount, cfoEvaluation, csuiteAgents = {}) {
     'proposal': 'Proposal Bot',
   };
   for (const [id, name] of Object.entries(salesTeamNames)) {
+    const inRegistry = agentRegistry.get(id) ? 'REG' : '---';
+    console.log(`    ${name} ......... ONLINE  [${inRegistry}]`);
+  }
+  console.log('----------------------------------------');
+  console.log('  Creative Team:');
+  const creativeTeamNames = {
+    'creative-director': 'Nova (Director)',
+    'designer': 'Iris (Designer)',
+    'video-editor': 'Finn (Video)',
+    'social-media': 'Jade (Social)',
+    'copywriter': 'Ash (Copy)',
+  };
+  for (const [id, name] of Object.entries(creativeTeamNames)) {
     const inRegistry = agentRegistry.get(id) ? 'REG' : '---';
     console.log(`    ${name} ......... ONLINE  [${inRegistry}]`);
   }
@@ -272,12 +298,37 @@ async function boot() {
   }
   logger.log('system', 'SALES_TEAM_LOADED', { count: Object.keys(salesTeamAgents).length });
 
+  // Register Creative Team agents
+  const creativeTeamAgents = {
+    'creative-director': creativeDirectorBrain,
+    'designer': designerBrain,
+    'video-editor': videoBrain,
+    'social-media': socialBrain,
+    'copywriter': copywriterBrain,
+  };
+  for (const [id, brain] of Object.entries(creativeTeamAgents)) {
+    agentRegistry.register(id, brain);
+  }
+  logger.log('system', 'CREATIVE_TEAM_LOADED', { count: Object.keys(creativeTeamAgents).length });
+
   logger.log('system', 'REGISTRY_READY', { agents: agentRegistry.list() });
+
+  // Register Nikita in the registry so scheduler can dispatch to her
+  agentRegistry.register('nikita', nikitaBrain);
 
   // Register clients, create agents, run demo simulation
   initClients();
   initAgents();
   const cfoEvaluation = simulateCfoTask();
+
+  // Start the scheduler
+  scheduler.start();
+  logger.log('system', 'SCHEDULER_STARTED', { schedules: scheduler.listSchedules().length });
+
+  // Start the dashboard server
+  const dashboard = createDashboardServer();
+  await dashboard.start();
+  logger.log('system', 'DASHBOARD_STARTED', { port: 3001 });
 
   // Print the startup summary
   printStartupSummary(bootCount, cfoEvaluation, csuiteAgents);
@@ -318,6 +369,7 @@ export {
   qa, codeReviewer,
   sprintManager,
   salesLeadBrain, closerBrain, leadQualifierBrain, followUpBrain, proposalBrain,
+  scheduler,
 };
 
 // Boot

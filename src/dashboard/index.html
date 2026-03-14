@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Claw Agency — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Reset & Base ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --card-border: rgba(255, 255, 255, 0.06);
+      --card-hover: #1f2330;
+      --accent: #0ea5e9;
+      --accent-glow: rgba(14, 165, 233, 0.15);
+      --accent-dim: rgba(14, 165, 233, 0.6);
+      --green: #10b981;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
+      --font: 'Inter', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', 'Consolas', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Header ─────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(15, 17, 23, 0.8);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header-title span {
+      color: var(--accent);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .uptime {
+      color: var(--text-dim);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    /* ─── Main Grid ──────────────────────────────────── */
+    .main {
+      padding: 24px 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* ─── Cards ───────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    /* ─── Stat Cards ─────────────────────────────────── */
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .stat-accent { color: var(--accent); }
+    .stat-green { color: var(--green); }
+    .stat-amber { color: var(--amber); }
+    .stat-purple { color: var(--purple); }
+    .stat-red { color: var(--red); }
+
+    /* ─── Agent Table ────────────────────────────────── */
+    .agent-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .agent-row {
+      display: grid;
+      grid-template-columns: 8px 1fr 120px 80px 90px 70px;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      transition: background 0.15s;
+    }
+
+    .agent-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .agent-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .agent-dot.online { background: var(--green); }
+    .agent-dot.offline { background: var(--text-muted); }
+
+    .agent-name {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .agent-role {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .agent-rank {
+      font-size: 11px;
+      color: var(--accent-dim);
+      font-family: var(--mono);
+    }
+
+    .agent-tasks {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text-dim);
+    }
+
+    .agent-rate {
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    /* ─── Pipeline ────────────────────────────────────── */
+    .pipeline-bars {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      height: 100px;
+      padding-top: 8px;
+    }
+
+    .pipeline-bar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pipeline-bar-fill {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      min-height: 4px;
+      transition: height 0.5s ease;
+    }
+
+    .pipeline-bar-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .pipeline-bar-count {
+      font-size: 16px;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
+
+    /* ─── Logs ────────────────────────────────────────── */
+    .log-list {
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--card-border) transparent;
+    }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 70px 100px 1fr;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .log-time {
+      color: var(--text-muted);
+    }
+
+    .log-agent {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .log-action {
+      color: var(--text-dim);
+    }
+
+    /* ─── Sprint ──────────────────────────────────────── */
+    .progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .sprint-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .sprint-stat {
+      text-align: center;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+    }
+
+    .sprint-stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
+
+    .sprint-stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ─── Schedule ────────────────────────────────────── */
+    .schedule-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+    }
+
+    .schedule-info {
+      flex: 1;
+    }
+
+    .schedule-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .schedule-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .btn-run {
+      padding: 5px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--accent);
+      font-size: 11px;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-run:hover {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+    }
+
+    .btn-run:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ─── Clients ─────────────────────────────────────── */
+    .client-card {
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .client-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .client-name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .client-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ─── Section Titles ──────────────────────────────── */
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .main { padding: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .header { padding: 16px; }
+      .agent-row { grid-template-columns: 8px 1fr 80px; }
+      .agent-rank, .agent-tasks, .agent-rate { display: none; }
+    }
+
+    /* ─── Loading ─────────────────────────────────────── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--card-border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ─── Toast ───────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success { border-color: var(--green); }
+    .toast.error { border-color: var(--red); }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">OC</div>
+      <div class="header-title">Open <span>Claw</span> Agency</div>
+    </div>
+    <div class="header-right">
+      <span class="uptime" id="uptime">--</span>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span>Systems Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Stat Cards -->
+    <div class="grid" id="stat-cards">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Agents Online</span>
+        </div>
+        <div class="stat-value stat-accent" id="stat-agents">--</div>
+        <div class="stat-label">Registered & active</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Pipeline</span>
+        </div>
+        <div class="stat-value stat-green" id="stat-pipeline">--</div>
+        <div class="stat-label">Active deals</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Revenue</span>
+        </div>
+        <div class="stat-value stat-purple" id="stat-revenue">--</div>
+        <div class="stat-label">Total closed</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Boot Count</span>
+        </div>
+        <div class="stat-value stat-amber" id="stat-boots">--</div>
+        <div class="stat-label">System restarts</div>
+      </div>
+    </div>
+
+    <!-- Agents + Pipeline -->
+    <div class="grid-3">
+      <!-- Agent List -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Agent Roster</span>
+          <span class="agent-tasks" id="agent-count">-- agents</span>
+        </div>
+        <div class="agent-grid" id="agent-list">
+          <div class="loading"><div class="spinner"></div> Loading agents...</div>
+        </div>
+      </div>
+
+      <!-- Pipeline & Finance -->
+      <div>
+        <!-- Pipeline Card -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <span class="card-title">Sales Pipeline</span>
+          </div>
+          <div class="pipeline-bars" id="pipeline-chart">
+            <div class="pipeline-bar">
+              <div class="pipeline-bar-count stat-red" id="pipe-hot">0</div>
+              <div class="pipeline-bar-fill" style="height: 4px; background: var(--red);" id="bar-hot"></div>
+              <div class="pipeline-bar-label">Hot</div>
+            </div>
+            <div class="pipeline-bar">
+              <div class="pipeline-bar-count stat-amber" id="pipe-warm">0</div>
+              <div class="pipeline-bar-fill" style="height: 4px; background: var(--amber);" id="bar-warm"></div>
+              <div class="pipeline-bar-label">Warm</div>
+            </div>
+            <div class="pipeline-bar">
+              <div class="pipeline-bar-count stat-accent" id="pipe-cold">0</div>
+              <div class="pipeline-bar-fill" style="height: 4px; background: var(--accent);" id="bar-cold"></div>
+              <div class="pipeline-bar-label">Cold</div>
+            </div>
+            <div class="pipeline-bar">
+              <div class="pipeline-bar-count stat-green" id="pipe-won">0</div>
+              <div class="pipeline-bar-fill" style="height: 4px; background: var(--green);" id="bar-won"></div>
+              <div class="pipeline-bar-label">Won</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Finance Card -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <span class="card-title">Finances</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">Revenue</div>
+              <div style="font-size: 18px; font-weight: 600; color: var(--green); font-family: var(--mono);" id="fin-revenue">$0</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">Expenses</div>
+              <div style="font-size: 18px; font-weight: 600; color: var(--red); font-family: var(--mono);" id="fin-expenses">$0</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">Profit</div>
+              <div style="font-size: 18px; font-weight: 600; font-family: var(--mono);" id="fin-profit">$0</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">Cash Position</div>
+              <div style="font-size: 18px; font-weight: 600; font-family: var(--mono);" id="fin-cash">$0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clients Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Clients</span>
+          </div>
+          <div id="client-list">
+            <div class="loading"><div class="spinner"></div> Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sprint + Schedules -->
+    <div class="grid-2">
+      <!-- Sprint Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Active Sprint</span>
+          <span class="agent-tasks" id="sprint-name">--</span>
+        </div>
+        <div id="sprint-content">
+          <div style="color: var(--text-muted); font-size: 13px;">No active sprint</div>
+        </div>
+      </div>
+
+      <!-- Schedules Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Scheduled Tasks</span>
+        </div>
+        <div class="schedule-list" id="schedule-list">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Agent Activity Log</span>
+        <span class="agent-tasks" id="log-count">-- entries</span>
+      </div>
+      <div class="log-list" id="log-list">
+        <div class="loading"><div class="spinner"></div> Loading logs...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '';
+    let refreshTimer = null;
+
+    // ─── Fetch & Render ─────────────────────────────────
+    async function fetchStatus() {
+      try {
+        const res = await fetch(`${API}/api/status`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        renderAll(data);
+      } catch (err) {
+        console.error('Failed to fetch status:', err);
+      }
+    }
+
+    function renderAll(data) {
+      renderStats(data);
+      renderAgents(data.agents);
+      renderPipeline(data.pipeline);
+      renderFinances(data.finances);
+      renderClients(data.clients);
+      renderSprints(data.activeSprints);
+      renderLogs(data.recentLogs);
+      renderUptime(data.systemHealth);
+    }
+
+    // ─── Stats ──────────────────────────────────────────
+    function renderStats(data) {
+      document.getElementById('stat-agents').textContent = data.agents?.length || 0;
+      document.getElementById('stat-pipeline').textContent = data.pipeline?.total || 0;
+      document.getElementById('stat-revenue').textContent = formatCurrency(data.finances?.revenue || 0);
+      document.getElementById('stat-boots').textContent = data.systemHealth?.bootCount || 0;
+    }
+
+    // ─── Agents ─────────────────────────────────────────
+    function renderAgents(agents) {
+      const container = document.getElementById('agent-list');
+      if (!agents || agents.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 12px;">No agents registered</div>';
+        return;
+      }
+
+      document.getElementById('agent-count').textContent = `${agents.length} agents`;
+
+      container.innerHTML = agents.map(a => `
+        <div class="agent-row">
+          <div class="agent-dot ${a.status === 'ONLINE' || a.status === 'ACTIVE' ? 'online' : 'offline'}"></div>
+          <div>
+            <div class="agent-name">${esc(a.name)}</div>
+            <div class="agent-role">${esc(a.role)}</div>
+          </div>
+          <div class="agent-rank">${esc(a.rank || '--')}</div>
+          <div class="agent-tasks">${a.tasksCompleted || 0} tasks</div>
+          <div class="agent-rate" style="color: ${a.successRate >= 80 ? 'var(--green)' : a.successRate >= 50 ? 'var(--amber)' : 'var(--text-muted)'}">${a.successRate || 0}%</div>
+        </div>
+      `).join('');
+    }
+
+    // ─── Pipeline ───────────────────────────────────────
+    function renderPipeline(pipeline) {
+      if (!pipeline) return;
+
+      const max = Math.max(pipeline.hot, pipeline.warm, pipeline.cold, pipeline.wonThisMonth, 1);
+
+      document.getElementById('pipe-hot').textContent = pipeline.hot || 0;
+      document.getElementById('pipe-warm').textContent = pipeline.warm || 0;
+      document.getElementById('pipe-cold').textContent = pipeline.cold || 0;
+      document.getElementById('pipe-won').textContent = pipeline.wonThisMonth || 0;
+
+      document.getElementById('bar-hot').style.height = `${Math.max(((pipeline.hot || 0) / max) * 70, 4)}px`;
+      document.getElementById('bar-warm').style.height = `${Math.max(((pipeline.warm || 0) / max) * 70, 4)}px`;
+      document.getElementById('bar-cold').style.height = `${Math.max(((pipeline.cold || 0) / max) * 70, 4)}px`;
+      document.getElementById('bar-won').style.height = `${Math.max(((pipeline.wonThisMonth || 0) / max) * 70, 4)}px`;
+    }
+
+    // ─── Finances ───────────────────────────────────────
+    function renderFinances(fin) {
+      if (!fin) return;
+
+      document.getElementById('fin-revenue').textContent = formatCurrency(fin.revenue);
+      document.getElementById('fin-expenses').textContent = formatCurrency(fin.expenses);
+      document.getElementById('fin-profit').textContent = formatCurrency(fin.profit);
+      document.getElementById('fin-profit').style.color = fin.profit >= 0 ? 'var(--green)' : 'var(--red)';
+      document.getElementById('fin-cash').textContent = formatCurrency(fin.cashPosition);
+    }
+
+    // ─── Clients ────────────────────────────────────────
+    function renderClients(clients) {
+      const container = document.getElementById('client-list');
+      if (!clients || clients.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No clients registered</div>';
+        return;
+      }
+
+      container.innerHTML = clients.map(c => `
+        <div class="client-card">
+          <div class="client-avatar">${esc(c.name?.charAt(0) || '?')}</div>
+          <div>
+            <div class="client-name">${esc(c.name)}</div>
+            <div class="client-meta">${esc(c.industry || 'Unknown')} &middot; ${c.activeAgents} agents</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ─── Sprints ────────────────────────────────────────
+    function renderSprints(sprints) {
+      const container = document.getElementById('sprint-content');
+      const nameEl = document.getElementById('sprint-name');
+
+      if (!sprints || sprints.length === 0) {
+        nameEl.textContent = '--';
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No active sprint</div>';
+        return;
+      }
+
+      const s = sprints[0];
+      const total = s.totalTasks || 1;
+      const pct = Math.round((s.tasksDone / total) * 100);
+
+      nameEl.textContent = s.sprintName || s.clientId;
+
+      container.innerHTML = `
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${pct}%"></div>
+        </div>
+        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">${pct}% complete</div>
+        <div class="sprint-stats">
+          <div class="sprint-stat">
+            <div class="sprint-stat-value stat-accent">${s.tasksInProgress}</div>
+            <div class="sprint-stat-label">In Progress</div>
+          </div>
+          <div class="sprint-stat">
+            <div class="sprint-stat-value stat-green">${s.tasksDone}</div>
+            <div class="sprint-stat-label">Done</div>
+          </div>
+          <div class="sprint-stat">
+            <div class="sprint-stat-value stat-red">${s.blockers}</div>
+            <div class="sprint-stat-label">Blocked</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ─── Logs ───────────────────────────────────────────
+    function renderLogs(logs) {
+      const container = document.getElementById('log-list');
+      if (!logs || logs.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 12px;">No logs yet</div>';
+        return;
+      }
+
+      document.getElementById('log-count').textContent = `${logs.length} entries`;
+
+      // Reverse to show newest first
+      const reversed = [...logs].reverse();
+
+      container.innerHTML = reversed.map(log => {
+        const time = new Date(log.timestamp);
+        const timeStr = time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        return `
+          <div class="log-entry">
+            <span class="log-time">${timeStr}</span>
+            <span class="log-agent">${esc(log.agentId)}</span>
+            <span class="log-action">${esc(log.action)}${log.details && Object.keys(log.details).length ? ' <span style="color: var(--text-muted);">' + esc(summarizeDetails(log.details)) + '</span>' : ''}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ─── Uptime ─────────────────────────────────────────
+    function renderUptime(health) {
+      if (!health) return;
+      document.getElementById('uptime').textContent = `Uptime: ${health.uptimeFormatted || '--'}`;
+    }
+
+    // ─── Schedules ──────────────────────────────────────
+    async function fetchSchedules() {
+      try {
+        const res = await fetch(`${API}/api/schedules`);
+        if (!res.ok) return;
+        const schedules = await res.json();
+        renderSchedules(schedules);
+      } catch (err) {
+        console.error('Failed to fetch schedules:', err);
+      }
+    }
+
+    function renderSchedules(schedules) {
+      const container = document.getElementById('schedule-list');
+      if (!schedules || schedules.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No schedules configured</div>';
+        return;
+      }
+
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      container.innerHTML = schedules.map(s => {
+        const sched = s.schedule;
+        let timeStr = `${String(sched.hour).padStart(2, '0')}:${String(sched.minute).padStart(2, '0')}`;
+        if (sched.type === 'weekly' && sched.dayOfWeek !== null) {
+          timeStr = `${dayNames[sched.dayOfWeek]} ${timeStr}`;
+        } else {
+          timeStr = `Daily ${timeStr}`;
+        }
+
+        return `
+          <div class="schedule-item">
+            <div class="schedule-info">
+              <div class="schedule-name">${esc(s.name)}</div>
+              <div class="schedule-time">${esc(s.agentId)} &middot; ${timeStr}</div>
+            </div>
+            <button class="btn-run" onclick="runSchedule('${esc(s.key)}', this)">Run Now</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function runSchedule(name, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Running...';
+
+      try {
+        const res = await fetch(`${API}/api/schedules/${encodeURIComponent(name)}/run`, { method: 'POST' });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('Schedule executed successfully', 'success');
+        } else {
+          showToast(`Failed: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Error: ${err.message}`, 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Run Now';
+      fetchStatus();
+    }
+
+    // ─── Helpers ────────────────────────────────────────
+    function formatCurrency(n) {
+      if (n === 0) return '$0';
+      if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
+      if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
+      return `$${n.toLocaleString()}`;
+    }
+
+    function esc(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    function summarizeDetails(details) {
+      const keys = Object.keys(details);
+      if (keys.length === 0) return '';
+      const parts = keys.slice(0, 3).map(k => {
+        const v = details[k];
+        if (typeof v === 'string') return `${k}=${v.slice(0, 30)}`;
+        if (typeof v === 'number') return `${k}=${v}`;
+        if (typeof v === 'boolean') return `${k}=${v}`;
+        return k;
+      });
+      return parts.join(', ');
+    }
+
+    function showToast(msg, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => { toast.className = 'toast'; }, 3000);
+    }
+
+    // ─── Init ───────────────────────────────────────────
+    async function init() {
+      await Promise.all([fetchStatus(), fetchSchedules()]);
+      // Refresh every 10 seconds
+      refreshTimer = setInterval(() => {
+        fetchStatus();
+        fetchSchedules();
+      }, 10000);
+    }
+
+    init();
+  </script>
+</body>
+</html>

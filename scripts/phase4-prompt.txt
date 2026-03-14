@@ -1,0 +1,128 @@
+Read all existing files in src/ and agents/. You are building Phase 4 of the Open Claw Agency — the Creative Team.
+
+This is a generic creative team deployable for ANY client. Client context and brand guidelines injected at runtime.
+
+## AGENT PERSONAS (create in agents/creative/)
+
+Create agents/creative/director/SOUL.md — Creative Director "The Eye":
+- Name: Nova
+- Visually meticulous, brand-obsessed, quality over quantity
+- Has strong opinions about design — will push back on bad creative
+- Calm authority, never reactive, always considered
+- Reports to Nikita
+
+Create agents/creative/director/IDENTITY.md (Name: Nova, Role: Creative Director, Emoji: 🎬)
+Create agents/creative/director/CLAUDE.md
+
+Create agents/creative/designer/SOUL.md — Graphic Designer "The Visionary":
+- Name: Iris
+- Detail-obsessed, pixel-perfect
+- Translates briefs into visual concepts
+- Speaks in composition, contrast, hierarchy
+
+Create agents/creative/designer/IDENTITY.md (Name: Iris, Role: Graphic Designer, Emoji: 🎨)
+
+Create agents/creative/video/SOUL.md — Video Editor "The Frame":
+- Name: Finn
+- Storyteller first, editor second
+- Every cut has a reason
+- Obsessed with pacing and emotion
+
+Create agents/creative/video/IDENTITY.md (Name: Finn, Role: Video Editor, Emoji: 🎞️)
+
+Create agents/creative/social/SOUL.md — Social Media Manager "The Feed":
+- Name: Jade
+- Platform-native, trend-aware, engagement-driven
+- Knows the difference between LinkedIn voice and TikTok voice
+- Every post has a purpose — no filler content
+
+Create agents/creative/social/IDENTITY.md (Name: Jade, Role: Social Media Manager, Emoji: 📱)
+
+Create agents/creative/copywriter/SOUL.md — Copywriter "The Word":
+- Name: Ash
+- Sharp, concise, persuasive
+- Writes for humans not algorithms
+- Every word earns its place
+
+Create agents/creative/copywriter/IDENTITY.md (Name: Ash, Role: Copywriter, Emoji: ✒️)
+
+## BACKEND (src/agents/creative/)
+
+Create src/agents/creative/director-brain.js — Creative Director (Nova):
+- Extends BaseAgent from ../base-agent.js
+- Model: claude-sonnet-4-5
+- Methods:
+  - createBrief(clientId, project) — generates full creative brief with objectives, audience, tone, deliverables
+  - reviewCreative(clientId, asset, feedback) — reviews creative output, structured feedback
+  - approveCampaign(clientId, campaignId) — final approval, logs to data/clients/[clientId]/campaigns/
+  - manageBrandGuidelines(clientId, guidelines) — stores/updates brand guidelines in data/clients/[clientId]/brand.json
+  - assignCreativeTask(task, agentId) — dispatches via agent registry
+  - reportToPriya(clientId) — creative performance summary to CMO
+
+Create src/agents/creative/designer-brain.js — Graphic Designer (Iris):
+- Methods:
+  - designConcept(brief, format) — generates design concept description + specifications
+  - createAssetSpec(clientId, assetType, dimensions, brand) — detailed asset specification document
+  - reviewDesign(design, brandGuidelines) — brand consistency review
+  - generateColorPalette(brand, mood) — color palette recommendations with hex codes
+  - typographyGuide(brand) — typography recommendations
+
+Create src/agents/creative/video-brain.js — Video Editor (Finn):
+- Methods:
+  - createVideoScript(clientId, brief) — writes full video script with scene descriptions
+  - editingPlan(script, duration, platform) — shot list and editing plan
+  - captionScript(videoContent) — generates caption/subtitle text
+  - thumbnailConcept(videoTitle, brand) — thumbnail design concept
+  - videoStrategy(clientId, goals) — platform-specific video content strategy
+
+Create src/agents/creative/social-brain.js — Social Media Manager (Jade):
+- Methods:
+  - writePost(clientId, platform, brief, brand) — writes platform-native post (LinkedIn/Instagram/X/TikTok)
+  - createContentCalendar(clientId, period, themes) — full content calendar
+  - analyzeEngagement(clientId, metrics) — engagement analysis + recommendations
+  - trendReport(industry) — trending topics/formats relevant to client
+  - communityResponse(comment, brand, context) — generates response to community comment
+  - hashtagStrategy(clientId, platform, niche) — hashtag recommendations
+
+Create src/agents/creative/copywriter-brain.js — Copywriter (Ash):
+- Methods:
+  - writeHeadline(brief, count) — generates N headline variants
+  - writeCopy(clientId, brief, format, wordCount) — writes copy for any format (ad, email, landing page, etc)
+  - writeCTA(objective, audience, platform) — call-to-action variants
+  - reviewCopy(copy, brief, brand) — copy review against brief and brand voice
+  - writeEmailSequence(clientId, goal, steps) — multi-email nurture sequence
+  - writeAdCopy(clientId, platform, brief) — platform-specific ad copy
+
+## CONTENT CALENDAR (src/core/content-calendar.js)
+
+Create src/core/content-calendar.js — Content Calendar Manager:
+- Post schema: { id, clientId, platform, postType, status: DRAFT|SCHEDULED|PUBLISHED|ARCHIVED, scheduledDate, content, assets, createdBy, approvedBy, metrics }
+- Persists to data/clients/[clientId]/content-calendar.json
+- Methods:
+  - addPost(clientId, postData)
+  - updatePost(clientId, postId, updates)
+  - getSchedule(clientId, startDate, endDate)
+  - getByPlatform(clientId, platform)
+  - getPendingApproval(clientId)
+  - markPublished(clientId, postId, metrics)
+  - Singleton export
+
+## BRAND VAULT (src/core/brand-vault.js)
+
+Create src/core/brand-vault.js — Brand Guidelines Manager:
+- Stores brand identity per client: { clientId, name, colors: { primary, secondary, accent }, typography: { heading, body }, voice, tone, doNots, logoUsage, updatedAt }
+- Persists to data/clients/[clientId]/brand.json
+- Methods:
+  - setBrand(clientId, brandData)
+  - getBrand(clientId)
+  - updateBrand(clientId, updates)
+  - getVoiceGuidelines(clientId)
+  - Singleton export
+
+## Update src/index.js
+- Import and register all creative agents (director, designer, video, social, copywriter)
+- Import contentCalendar and brandVault
+- Update startup summary to show full team (now 21 agents total)
+- Show complete org chart on boot
+
+Node.js ESM. Clean and well commented. Each agent extends BaseAgent from src/agents/base-agent.js.

@@ -1,0 +1,69 @@
+Read all existing files in src/ and agents/. You are building Phase 5 of the Open Claw Agency — Voice & Dashboard.
+
+## PART 1: TASK SCHEDULER (src/core/scheduler.js)
+
+Nikita needs to autonomously trigger agent tasks on a schedule. Build src/core/scheduler.js:
+- Uses node's setInterval (no external deps)
+- Schedule config stored in data/schedules.json
+- Built-in schedules:
+  - Every Monday 9am: Jordan (sales) checks pipeline, reports to Nikita
+  - Every Friday 5pm: Kai (dev team) generates sprint report for Nikita
+  - Every day 8am: Nikita generates morning briefing
+  - Every week: Marcus (CFO) generates financial summary
+  - Every week: Priya (CMO) reviews content calendar
+- Methods:
+  - start() — begins all scheduled tasks
+  - stop() — clears all intervals
+  - addSchedule(name, cronLike, agentId, method, args) — adds new schedule
+  - listSchedules() — returns all active schedules
+  - runNow(scheduleName) — triggers immediately
+- Logs every scheduled task execution via logger
+- Singleton export
+
+## PART 2: DASHBOARD (src/dashboard/)
+
+Build a clean web dashboard. Single HTML file served by Express. 
+
+Create src/dashboard/server.js — Express dashboard server:
+- Serves on port 3001 (separate from any other services)
+- GET / → serves dashboard HTML
+- GET /api/status → returns full agency status JSON:
+  {
+    agents: [ { id, name, role, status, tasksCompleted, rank } ],
+    clients: [ { id, name, activeAgents, lastActivity } ],
+    pipeline: { total, hot, warm, cold, wonThisMonth },
+    finances: { revenue, expenses, profit },
+    activeSprints: [ { clientId, tasksInProgress, tasksDone, blockers } ],
+    recentLogs: [ last 20 agent actions ],
+    systemHealth: { uptime, bootCount, lastBriefing }
+  }
+- GET /api/agents → agent list with stats
+- GET /api/clients → client list
+- GET /api/logs → recent agent action logs
+- POST /api/task → manually trigger a task on an agent { agentId, method, args, clientId }
+
+Create src/dashboard/index.html — Premium dark dashboard UI:
+- Dark theme (#0f1117 background, #1a1d27 cards)
+- Electric blue (#0ea5e9) accents
+- Inter font for UI, JetBrains Mono for logs/code
+- Glassmorphism cards with subtle borders
+- Sections:
+  1. Header — "Open Agency" logo, system status dot (green=online), uptime
+  2. Agent Roster — grid of agent cards showing name, role, emoji, rank, tasks completed, status badge
+  3. Pipeline Overview — HOT/WARM/COLD counts, won this month
+  4. Active Sprints — per-client sprint progress bars
+  5. Financial Summary — revenue, expenses, profit (from CFO data)
+  6. Content Calendar — upcoming scheduled posts
+  7. Live Activity Feed — real-time scrolling log of agent actions (polls /api/logs every 5s)
+  8. Quick Actions — buttons to trigger common tasks (Morning Briefing, Pipeline Report, Sprint Status)
+- Fully responsive
+- Auto-refreshes data every 30 seconds
+- Uses fetch() to call the API endpoints
+
+## PART 3: UPDATE src/index.js
+- Import and start scheduler
+- Import and start dashboard server on port 3001
+- Log dashboard URL on boot: "Dashboard: http://localhost:3001"
+- Export scheduler and dashboardServer
+
+Clean, well-commented. Node.js ESM for server.js. Vanilla HTML/CSS/JS for the dashboard (no framework).
