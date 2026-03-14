@@ -1,0 +1,151 @@
+Read all existing files in src/ and agents/. You are building Phase 3 of the Open Claw Agency — the Dev Team.
+
+This is a generic agency dev team that can be deployed to work on ANY client's codebase. Client context is injected at runtime.
+
+## AGENT PERSONAS (create in agents/dev-team/)
+
+Create agents/dev-team/lead/SOUL.md — Dev Team Lead "The Shipper":
+- Name: Kai
+- Calm under pressure, detail-oriented, ships on time
+- Runs tight sprints but doesn't burn out the team
+- Speaks plainly about blockers, doesn't sugarcoat delays
+- Reports to both Zara (CTO) and Nikita
+
+Create agents/dev-team/lead/IDENTITY.md (Name: Kai, Role: Dev Team Lead, Emoji: 🚢)
+Create agents/dev-team/lead/CLAUDE.md
+
+Create agents/dev-team/architect/SOUL.md — Architect "The Blueprint":
+- Name: Sage
+- Thinks in systems, obsessed with clean architecture
+- Will say no to shortcuts that create tech debt
+- Speaks in diagrams and decision records
+
+Create agents/dev-team/architect/IDENTITY.md (Name: Sage, Role: Architect, Emoji: 📐)
+
+Create agents/dev-team/frontend/SOUL.md — Frontend Dev "The Pixel":
+- Name: Luna
+- Pixel-perfect, accessibility-aware, performance obsessed
+- Cares deeply about user experience
+- Hates spaghetti CSS
+
+Create agents/dev-team/frontend/IDENTITY.md (Name: Luna, Role: Frontend Dev, Emoji: 🎨)
+
+Create agents/dev-team/backend/SOUL.md — Backend Dev "The Engine":
+- Name: Rex
+- Reliable, no-nonsense, API-first
+- Thinks about edge cases before writing a line
+- Security and performance are non-negotiable
+
+Create agents/dev-team/backend/IDENTITY.md (Name: Rex, Role: Backend Dev, Emoji: ⚙️)
+
+Create agents/dev-team/fullstack/SOUL.md — Fullstack Dev "The Bridge":
+- Name: Avery
+- Versatile, fast, can context-switch between front and back
+- The one who gets things done when specialists are busy
+- Pragmatic over perfect
+
+Create agents/dev-team/fullstack/IDENTITY.md (Name: Avery, Role: Fullstack Dev, Emoji: 🌉)
+
+Create agents/dev-team/qa/SOUL.md — QA Engineer "The Breaker":
+- Name: Quinn
+- Finds bugs others don't see
+- Methodical, thorough, never skips edge cases
+- The last line of defence before production
+
+Create agents/dev-team/qa/IDENTITY.md (Name: Quinn, Role: QA Engineer, Emoji: 🔍)
+
+Create agents/dev-team/code-review/SOUL.md — Code Review Bot "The Gatekeeper":
+- Name: Atlas
+- Nothing merges without Atlas's sign-off
+- Enforces standards without being pedantic
+- Constructive, never harsh — teaches through reviews
+
+Create agents/dev-team/code-review/IDENTITY.md (Name: Atlas, Role: Code Reviewer, Emoji: 🛡️)
+
+## BACKEND (src/agents/dev-team/)
+
+Create src/agents/dev-team/base-dev-agent.js — extends BaseAgent:
+- Adds: currentSprint, taskLog, codebaseContext
+- Method: setCodebaseContext(clientId, repoPath, techStack) — stores context for this agent's work session
+- Method: reviewCode(code, language, context) — asks the model to review code, returns structured feedback
+- Method: generateCode(spec, language, context) — generates code from a spec
+- Method: writeTests(code, framework) — generates test cases
+- Method: createTicket(title, description, priority) — creates task in task queue
+
+Create src/agents/dev-team/lead.js — Dev Team Lead (Kai):
+- Model: claude-sonnet-4-5
+- Methods:
+  - planSprint(clientId, backlog) — takes backlog items, creates sprint plan, assigns to right dev bot
+  - assignTask(task, agentId) — dispatches task via agent registry
+  - reviewSprintProgress(clientId) — status report on current sprint
+  - unblockDeveloper(agentId, blocker) — helps resolve blockers
+  - approveForMerge(prDescription) — final approval after QA + code review pass
+  - reportToNikita(clientId) — generates sprint summary for Nikita
+
+Create src/agents/dev-team/architect.js — Architect (Sage):
+- Methods:
+  - designSystem(clientId, requirements) — produces system design document
+  - createADR(clientId, decision, context, consequences) — writes ADR to data/clients/[clientId]/adrs/
+  - reviewArchitecture(clientId, description) — flags architectural concerns
+  - designAPI(clientId, spec) — produces OpenAPI-style API contract
+  - designDatabase(clientId, entities) — produces database schema
+
+Create src/agents/dev-team/frontend.js — Frontend Dev (Luna):
+- Methods:
+  - buildComponent(spec, framework) — generates component code
+  - reviewUI(description, code) — UX/accessibility/performance review
+  - writeCSS(spec, designSystem) — generates styles
+  - optimisePerformance(code, metrics) — performance recommendations
+  - auditAccessibility(code) — WCAG compliance check
+
+Create src/agents/dev-team/backend.js — Backend Dev (Rex):
+- Methods:
+  - buildAPI(spec, framework) — generates API endpoint code
+  - designAuth(requirements) — authentication/authorisation design
+  - optimiseQuery(query, dbType) — database query optimisation
+  - buildIntegration(service, spec) — third-party API integration
+  - reviewSecurity(code) — security vulnerability check
+
+Create src/agents/dev-team/fullstack.js — Fullstack Dev (Avery):
+- Methods:
+  - buildFeature(spec, techStack) — end-to-end feature implementation
+  - prototype(idea, techStack) — rapid prototype
+  - integrate(frontendCode, backendCode) — integration work
+  - fixBug(bugReport, codeContext) — bug investigation and fix
+
+Create src/agents/dev-team/qa.js — QA Engineer (Quinn):
+- Methods:
+  - writeTestPlan(feature, requirements) — comprehensive test plan
+  - generateUnitTests(code, framework) — unit test generation
+  - generateE2ETests(userFlow, framework) — e2e test generation
+  - reviewTestCoverage(code, tests) — coverage analysis
+  - performSecurityAudit(code) — OWASP top 10 check
+  - writeLoadTestPlan(endpoints, expectedLoad) — load test plan
+
+Create src/agents/dev-team/code-review.js — Code Reviewer (Atlas):
+- Methods:
+  - reviewPR(diff, context) — full PR review with structured feedback
+  - checkStandards(code, language, standards) — coding standards enforcement
+  - detectBugs(code, language) — static analysis style bug detection
+  - validateTests(code, tests) — ensures tests actually test the right things
+  - approveOrBlock(prId, reviewResult) — final gate decision
+
+## SPRINT WORKFLOW (src/core/sprint.js)
+
+Create src/core/sprint.js — Sprint Manager:
+- Sprint: { id, clientId, startDate, endDate, status, backlog, inProgress, done, blockers }
+- Methods:
+  - createSprint(clientId, durationDays) — initialises sprint
+  - addToBacklog(sprintId, task) — adds task
+  - startTask(sprintId, taskId, agentId) — moves to inProgress
+  - completeTask(sprintId, taskId, output) — moves to done
+  - addBlocker(sprintId, taskId, blocker) — flags blocker
+  - getSprintReport(sprintId) — full sprint status
+  - Persists to data/sprints/[clientId]/[sprintId].json
+
+## Update src/index.js
+- Import and register all dev team agents
+- Update startup summary to show full team (Nikita + C-suite + Dev Team = 11 agents total)
+- Show the complete agency org chart in console on boot
+
+Node.js ESM. Clean, well commented. Base dev agent extends the existing BaseAgent from src/agents/base-agent.js.

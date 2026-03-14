@@ -1,0 +1,16 @@
+Read src/nikita/brain.js. Add ElevenLabs TTS support to Nikita.
+
+Add a speak(text) method to the NikitaBrain class:
+- Calls ElevenLabs API using process.env.ELEVENLABS_API_KEY
+- Voice ID: pFZP5JQG7iQjIQuC4Bku (Lily - velvety british actress)
+- Model: eleven_multilingual_v2
+- Voice settings: { stability: 0.5, similarityBoost: 0.75, style: 0.3, useSpeakerBoost: true }
+- POST to https://api.elevenlabs.io/v1/text-to-speech/[voiceId]
+- Get response as arrayBuffer, write to temp file: path.join(os.tmpdir(), 'nikita-' + Date.now() + '.mp3')
+- Play the file on Windows using child_process exec with: powershell -c "Invoke-Item 'FILEPATH'" (replace FILEPATH with the actual path)
+- If TTS fails for any reason, log a warning and continue — never crash
+- Also update generateDailyBriefing to call this.speak(briefingText) after generating
+
+Also update .env.example to include ELEVENLABS_API_KEY=your_key_here
+
+Use Node.js ESM (import/export). Use built-in fetch. Import os, path, fs/promises, child_process from node stdlib.

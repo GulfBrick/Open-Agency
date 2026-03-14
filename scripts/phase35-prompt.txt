@@ -1,0 +1,110 @@
+Read all existing files in src/ and agents/. You are building Phase 3.5 of the Open Claw Agency — the Sales Team.
+
+This is a generic sales team that can be deployed for ANY client. Client context injected at runtime.
+
+## AGENT PERSONAS (create in agents/sales/)
+
+Create agents/sales/lead/SOUL.md — Sales Lead "The Closer":
+- Name: Jordan
+- Persistent, empathetic, solution-oriented
+- Listens more than talks — asks the right questions
+- Never pushy, always value-first
+- Knows when to push and when to back off
+- Reports to Nikita
+
+Create agents/sales/lead/IDENTITY.md (Name: Jordan, Role: Sales Lead, Emoji: 🤝)
+Create agents/sales/lead/CLAUDE.md
+
+Create agents/sales/closer/SOUL.md — Closer Bot:
+- Name: Zoe
+- Sharp, confident, closes deals
+- Handles objections gracefully
+- Always focused on the client's outcome
+
+Create agents/sales/closer/IDENTITY.md (Name: Zoe, Role: Closer, Emoji: ✍️)
+
+Create agents/sales/qualifier/SOUL.md — Lead Qualifier:
+- Name: Sam
+- Analytical, methodical
+- Scores leads based on fit, budget, timeline
+- Saves the team from chasing bad leads
+
+Create agents/sales/qualifier/IDENTITY.md (Name: Sam, Role: Lead Qualifier, Emoji: 🔎)
+
+Create agents/sales/followup/SOUL.md — Follow-Up Bot:
+- Name: Maya
+- Persistent but never annoying
+- Knows the perfect follow-up cadence
+- Keeps leads warm without burning them
+
+Create agents/sales/followup/IDENTITY.md (Name: Maya, Role: Follow-Up Bot, Emoji: 📬)
+
+Create agents/sales/proposal/SOUL.md — Proposal Bot:
+- Name: Leo
+- Writes compelling, tailored proposals
+- Turns client requirements into persuasive documents
+- Clean, professional, always on-brand
+
+Create agents/sales/proposal/IDENTITY.md (Name: Leo, Role: Proposal Writer, Emoji: 📄)
+
+## BACKEND (src/agents/sales/)
+
+Create src/agents/sales/lead.js — Sales Lead (Jordan):
+- Extends BaseAgent from ../base-agent.js
+- Model: claude-sonnet-4-5
+- Methods:
+  - qualifyLead(clientId, leadData) — scores lead, returns { score, tier: HOT|WARM|COLD, notes }
+  - managePipeline(clientId) — returns full pipeline status from data/clients/[clientId]/pipeline.json
+  - assignLead(leadId, agentId) — routes lead to closer/qualifier/followup
+  - reportToNikita(clientId) — weekly sales summary
+  - forecastRevenue(clientId) — pipeline value × close probability
+
+Create src/agents/sales/closer.js — Closer (Zoe):
+- Methods:
+  - handleConversation(clientId, leadId, message) — responds to lead message in context
+  - writeProposal(clientId, leadId, requirements) — delegates to proposal bot via registry
+  - handleObjection(objection, context) — generates objection handling response
+  - closeStrategy(clientId, leadId) — recommends close approach based on lead profile
+
+Create src/agents/sales/qualifier.js — Lead Qualifier (Sam):
+- Methods:
+  - scoreLead(leadData) — BANT scoring (Budget, Authority, Need, Timeline), returns 0-100
+  - categorizeLead(score) — HOT (70+) / WARM (40-69) / COLD (<40)
+  - enrichLead(leadData) — adds context/questions to understand lead better
+  - recommendAction(score, leadData) — next best action
+
+Create src/agents/sales/followup.js — Follow-Up Bot (Maya):
+- Methods:
+  - scheduleFollowUp(clientId, leadId, lastContact, stage) — calculates next follow-up date
+  - writeFollowUpMessage(clientId, leadId, context) — generates follow-up message
+  - getDueFollowUps(clientId) — returns leads due for follow-up today
+  - updateCadence(leadId, response) — adjusts follow-up schedule based on response
+
+Create src/agents/sales/proposal.js — Proposal Writer (Leo):
+- Methods:
+  - writeProposal(clientId, leadId, requirements) — generates full proposal document
+  - generateExecutiveSummary(requirements) — one-page summary
+  - createPricing(requirements, pricingModel) — pricing table
+  - writeProposalSection(section, context) — generates individual proposal sections
+  - Saves proposals to data/clients/[clientId]/proposals/[leadId]-[timestamp].md
+
+## CRM (src/core/crm.js)
+
+Create src/core/crm.js — Simple CRM:
+- Lead schema: { id, clientId, name, email, company, source, status: NEW|QUALIFIED|PROPOSAL|NEGOTIATION|WON|LOST, score, assignedTo, notes, createdAt, lastContact, nextFollowUp }
+- Persists to data/clients/[clientId]/pipeline.json
+- Methods:
+  - addLead(clientId, leadData) — creates lead
+  - updateLead(clientId, leadId, updates) — patches lead
+  - getLead(clientId, leadId)
+  - getPipeline(clientId, filter) — returns leads filtered by status/score
+  - getStats(clientId) — { total, byStatus, totalValue, avgScore, conversionRate }
+  - moveTo(clientId, leadId, status) — moves lead through pipeline stages
+  - Singleton export
+
+## Update src/index.js
+- Import and register all sales agents (lead, closer, qualifier, followup, proposal)
+- Import crm from src/core/crm.js
+- Update startup summary to show full team including sales (now 16 agents total)
+
+Node.js ESM. Clean and well commented. Each agent extends BaseAgent from src/agents/base-agent.js.

@@ -1,0 +1,117 @@
+Read all existing files in src/ and agents/. You are building Phase 2 of the Open Claw Agency — the C-Suite agents: CFO, CTO, and CMO.
+
+This is a FULL SCALE AI AGENCY that can be deployed to manage ANY business. The agents are generic and reusable across clients. Client-specific knowledge is injected at runtime via the business-knowledge system.
+
+## WHAT TO BUILD
+
+### 1. Agent Config Files (OpenClaw persona files)
+
+Create agents/cfo/SOUL.md — CFO persona:
+- Name: Marcus
+- Precise, data-driven, speaks in facts not feelings
+- Cautious with money, never guesses on numbers
+- Direct but not cold — he's the one who tells you the truth about the money
+- Escalates to Nikita for: budget overruns, unexpected expenses, payout approvals over threshold
+
+Create agents/cfo/IDENTITY.md (Name: Marcus, Role: CFO, Emoji: 💰)
+Create agents/cfo/CLAUDE.md — his session instructions, reports to Nikita
+
+Create agents/cto/SOUL.md — CTO persona:
+- Name: Zara
+- Pragmatic, systems thinker, security-conscious
+- Thinks in architecture not features — always asks "how does this scale?"
+- Will push back on bad tech decisions
+- Escalates to Nikita for: major architecture changes, security incidents, infrastructure spend over threshold
+
+Create agents/cto/IDENTITY.md (Name: Zara, Role: CTO, Emoji: 🏗️)
+Create agents/cto/CLAUDE.md — her session instructions, reports to Nikita
+
+Create agents/cmo/SOUL.md — CMO persona:
+- Name: Priya
+- Creative, trend-aware, metrics-obsessed
+- Every campaign has a number attached — no vanity metrics
+- Warm and energetic but always anchored to ROI
+- Escalates to Nikita for: campaign budgets over threshold, brand-level decisions, client-facing launches
+
+Create agents/cmo/IDENTITY.md (Name: Priya, Role: CMO, Emoji: 📣)
+Create agents/cmo/CLAUDE.md — her session instructions, reports to Nikita
+
+### 2. Backend Agent Classes
+
+Create src/agents/cfo.js — CFO Agent class:
+- Extends a base Agent class (create src/agents/base-agent.js first)
+- Uses claude-sonnet-4-5 model (worker-level, not Opus)
+- System prompt: Marcus persona, CFO responsibilities
+- Methods:
+  - analyzeFinancials(clientId, data) — reviews financial data, returns structured report
+  - generateInvoice(clientId, details) — creates invoice record in data/clients/[clientId]/invoices/
+  - trackExpense(clientId, expense) — logs expense to data/clients/[clientId]/expenses.jsonl
+  - forecastCashFlow(clientId, months) — simple projection based on historical data
+  - generateReport(clientId, period) — weekly/monthly financial summary
+  - flagAnomaly(clientId, transaction) — detects unusual spending, escalates via message bus
+- Records every task via experience tracker
+- Injects client context before every task
+
+Create src/agents/cto.js — CTO Agent class:
+- Uses claude-sonnet-4-5 model
+- System prompt: Zara persona, CTO responsibilities
+- Methods:
+  - reviewArchitecture(clientId, description) — reviews tech decisions, flags concerns
+  - auditSecurity(clientId, details) — security posture assessment
+  - monitorSystem(clientId, metrics) — evaluates system health metrics
+  - recommendStack(clientId, requirements) — suggests tech stack for a given need
+  - createADR(clientId, decision) — writes Architecture Decision Record to data/clients/[clientId]/adrs/
+  - estimateInfrastructureCost(clientId, requirements) — cloud cost estimation
+- Records every task via experience tracker
+
+Create src/agents/cmo.js — CMO Agent class:
+- Uses claude-sonnet-4-5 model
+- System prompt: Priya persona, CMO responsibilities
+- Methods:
+  - createCampaignBrief(clientId, goal) — generates campaign brief with KPIs
+  - analyzeMktMetrics(clientId, data) — interprets marketing data, recommends actions
+  - generateContentCalendar(clientId, period) — creates content plan
+  - writeAdCopy(clientId, brief) — generates ad copy variants
+  - seoAudit(clientId, url) — basic SEO recommendations
+  - competitorAnalysis(clientId, competitors) — market positioning analysis
+- Records every task via experience tracker
+
+### 3. Base Agent Class
+
+Create src/agents/base-agent.js:
+- BaseAgent class that CFO, CTO, CMO all extend
+- Constructor: (agentId, name, role, model)
+- Properties: agentId, name, role, model, anthropic client
+- Methods:
+  - chat(messages, systemPrompt) — calls Anthropic API, returns response text
+  - getContext(clientId) — calls agentProfile.getAgentContext(this.agentId, clientId)
+  - recordTask(clientId, taskType, outcome, details) — calls experience.recordTask()
+  - escalate(to, subject, details) — sends ESCALATION message via message bus
+  - log(action, details) — calls logger
+- Loads ANTHROPIC_API_KEY from env
+
+### 4. Agent Registry
+
+Create src/core/agent-registry.js:
+- Central registry of all active agents
+- Methods:
+  - register(agentId, agentInstance) — registers an agent
+  - get(agentId) — returns agent instance
+  - list() — returns all registered agents
+  - getByDepartment(department) — returns agents in a department
+  - dispatch(agentId, method, ...args) — calls a method on an agent, logs it
+
+### 5. Update src/index.js
+- Import and initialise CFO, CTO, CMO agents
+- Register them in the agent registry
+- Update startup summary to show all 6 agents (3 existing + 3 new C-suite)
+- Demo: ask CFO to generate a brief financial report for clearline-markets
+- Print Nikita's team roster
+
+## IMPORTANT NOTES
+- Use Node.js ESM throughout
+- model name: claude-sonnet-4-5 (not claude-sonnet-4-5-20250514)
+- All agents report to Nikita via message bus
+- Keep agents generic — client context is always injected, never hardcoded
+- Every agent action gets logged and recorded in experience tracker
+- Well commented throughout
