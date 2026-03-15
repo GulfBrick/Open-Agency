@@ -83,10 +83,10 @@ class NikitaConversation {
     }));
 
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const anthropic = new Anthropic();
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5',
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: apiMessages,
@@ -106,7 +106,7 @@ class NikitaConversation {
 
     logger.log('nikita', 'CONVERSATION_REPLY', {
       channel,
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5',
       historyLength: history.length,
     });
 
