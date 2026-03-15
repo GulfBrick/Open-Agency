@@ -1945,21 +1945,91 @@
     }
 
     /* ─── CEO Chat Interface ───────────────────────────── */
+    /* ─── Slide-out Chat Sidebar ──────────────────────── */
     .nikita-chat {
       position: fixed;
-      bottom: 0;
-      left: 0;
+      top: 3px;
       right: 0;
+      bottom: 0;
+      width: 360px;
       z-index: 500;
+      display: flex;
+      flex-direction: column;
+      background: rgba(10, 11, 20, 0.97);
+      border-left: 1px solid rgba(124, 58, 237, 0.12);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nikita-chat.open {
+      transform: translateX(0);
+    }
+
+    .nikita-chat-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 501;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #7C3AED, #6D28D9);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 24px rgba(124, 58, 237, 0.35);
+      transition: all 0.2s;
+    }
+
+    .nikita-chat-toggle:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 32px rgba(124, 58, 237, 0.5);
+    }
+
+    .nikita-chat-toggle.hidden {
+      opacity: 0;
       pointer-events: none;
+      transform: scale(0.8);
+    }
+
+    .nikita-chat-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      z-index: 2;
+    }
+
+    .nikita-chat-close:hover {
+      background: rgba(124, 58, 237, 0.2);
+      color: var(--text);
+    }
+
+    .nikita-chat-header {
+      display: none;
     }
 
     .nikita-chat-thread {
-      max-height: 0;
+      flex: 1;
       overflow-y: auto;
-      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 0 40px;
-      pointer-events: auto;
+      padding: 16px;
       scrollbar-width: thin;
       scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
     }
@@ -1968,44 +2038,24 @@
     .nikita-chat-thread::-webkit-scrollbar-track { background: transparent; }
     .nikita-chat-thread::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.2); border-radius: 4px; }
 
-    .nikita-chat-thread.has-messages {
-      max-height: 400px;
-      padding-top: 80px;
-      padding-bottom: 16px;
-    }
-
     .nikita-chat-thread-inner {
-      max-width: 720px;
-      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-    }
-
-    .nikita-chat-thread::before {
-      content: '';
-      position: sticky;
-      top: 0;
-      display: block;
-      height: 60px;
-      background: linear-gradient(180deg, var(--bg), transparent);
-      margin: -80px -40px 0;
-      padding: 0 40px;
-      pointer-events: none;
-      z-index: 1;
+      gap: 10px;
     }
 
     .chat-msg {
-      max-width: 75%;
-      padding: 12px 16px;
-      border-radius: 16px;
+      max-width: 90%;
+      padding: 10px 14px;
+      border-radius: 14px;
       font-size: 13px;
-      line-height: 1.6;
+      line-height: 1.55;
       animation: chatMsgIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      word-wrap: break-word;
     }
 
     @keyframes chatMsgIn {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -2019,42 +2069,40 @@
     .chat-msg.nikita {
       align-self: flex-start;
       background: rgba(15, 22, 35, 0.95);
-      border: 1px solid rgba(124, 58, 237, 0.12);
+      border: 1px solid rgba(124, 58, 237, 0.10);
       color: var(--text);
       border-bottom-left-radius: 4px;
-      display: flex;
-      gap: 10px;
     }
 
     .chat-msg.nikita .chat-nk-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #7C3AED, #F59E0B);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--heading);
-      font-weight: 800;
-      font-size: 10px;
-      color: #fff;
-      flex-shrink: 0;
-      margin-top: 1px;
+      display: none; /* hidden in sidebar — header already shows avatar */
     }
 
     .chat-msg.nikita .chat-msg-text {
-      flex: 1;
       min-width: 0;
     }
 
     .chat-msg-time {
       font-size: 10px;
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.35);
       margin-top: 4px;
     }
 
     .chat-msg.nikita .chat-msg-time {
       color: var(--text-muted);
+    }
+
+    .chat-channel-badge {
+      display: inline-block;
+      font-size: 9px;
+      color: var(--text-muted);
+      background: rgba(124, 58, 237, 0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      font-family: var(--mono);
+      letter-spacing: 0.3px;
     }
 
     .chat-msg.typing .chat-msg-text::after {
@@ -2074,30 +2122,25 @@
     }
 
     .nikita-chat-bar {
-      background: rgba(10, 11, 20, 0.95);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
       border-top: 1px solid rgba(124, 58, 237, 0.10);
-      padding: 14px 40px;
-      pointer-events: auto;
+      padding: 12px 16px;
+      flex-shrink: 0;
     }
 
     .nikita-chat-bar-inner {
-      max-width: 720px;
-      margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       background: rgba(15, 22, 35, 0.8);
       border: 1px solid rgba(124, 58, 237, 0.12);
-      border-radius: 14px;
-      padding: 4px 4px 4px 18px;
+      border-radius: 12px;
+      padding: 4px 4px 4px 14px;
       transition: border-color 0.2s;
     }
 
     .nikita-chat-bar-inner:focus-within {
       border-color: rgba(124, 58, 237, 0.35);
-      box-shadow: 0 0 24px rgba(124, 58, 237, 0.06);
+      box-shadow: 0 0 16px rgba(124, 58, 237, 0.06);
     }
 
     .nikita-chat-input {
@@ -2107,8 +2150,9 @@
       outline: none;
       color: var(--text);
       font-family: var(--font);
-      font-size: 14px;
-      padding: 10px 0;
+      font-size: 13px;
+      padding: 8px 0;
+      min-width: 0;
     }
 
     .nikita-chat-input::placeholder {
@@ -2116,13 +2160,13 @@
     }
 
     .nikita-chat-send {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
       border: none;
       background: linear-gradient(135deg, #7C3AED, #6D28D9);
       color: #fff;
-      font-size: 16px;
+      font-size: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -2133,27 +2177,24 @@
 
     .nikita-chat-send:hover {
       background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-      box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
-      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba(124, 58, 237, 0.3);
     }
 
     .nikita-chat-send:disabled {
       opacity: 0.4;
       cursor: not-allowed;
-      transform: none;
       box-shadow: none;
     }
 
-    /* Push body content up so chat bar doesn't overlap */
-    body { padding-bottom: 80px; }
+    body { padding-bottom: 20px; }
 
     .toast {
-      bottom: 96px;
+      bottom: 24px;
     }
 
     @media (max-width: 768px) {
-      .nikita-chat-bar { padding: 12px 16px; }
-      .nikita-chat-thread { padding: 0 16px; }
+      .nikita-chat { width: 100%; }
+      .nikita-chat-toggle { bottom: 16px; right: 16px; width: 46px; height: 46px; font-size: 20px; }
       .chat-msg { max-width: 88%; }
     }
 
@@ -2511,8 +2552,12 @@
     <span>Open Agency</span> &copy; 2026 &middot; Intelligence at work.
   </div>
 
-  <!-- Nikita Chat Interface -->
+  <!-- Nikita Chat Toggle Button -->
+  <button class="nikita-chat-toggle" id="nikita-chat-toggle" title="Chat with Nikita">&#128172;</button>
+
+  <!-- Nikita Chat Sidebar -->
   <div class="nikita-chat" id="nikita-chat">
+    <button class="nikita-chat-close" id="nikita-chat-close" title="Close chat">&#10005;</button>
     <div class="nikita-chat-thread" id="nikita-chat-thread">
       <div class="nikita-chat-thread-inner" id="nikita-chat-messages"></div>
     </div>
@@ -3308,26 +3353,41 @@
     }
 
     // ─── Nikita Chat ──────────────────────────────────
+    const chatPanel = document.getElementById('nikita-chat');
+    const chatToggleBtn = document.getElementById('nikita-chat-toggle');
+    const chatCloseBtn = document.getElementById('nikita-chat-close');
     const chatInput = document.getElementById('nikita-chat-input');
     const chatSendBtn = document.getElementById('nikita-chat-send');
     const chatThread = document.getElementById('nikita-chat-thread');
     const chatMessages = document.getElementById('nikita-chat-messages');
 
+    chatToggleBtn.addEventListener('click', () => {
+      chatPanel.classList.add('open');
+      chatToggleBtn.classList.add('hidden');
+      chatInput.focus();
+    });
+
+    chatCloseBtn.addEventListener('click', () => {
+      chatPanel.classList.remove('open');
+      chatToggleBtn.classList.remove('hidden');
+    });
+
     function chatTimeStr() {
       return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     }
 
-    function appendChatMsg(role, text) {
+    function appendChatMsg(role, text, channel, timestamp) {
       const div = document.createElement('div');
+      const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : chatTimeStr();
+      const badge = channel ? `<span class="chat-channel-badge">${esc(channel)}</span>` : '';
       if (role === 'user') {
         div.className = 'chat-msg user';
-        div.innerHTML = `<div class="chat-msg-text">${esc(text)}</div><div class="chat-msg-time">${chatTimeStr()}</div>`;
+        div.innerHTML = `<div class="chat-msg-text">${esc(text)}</div><div class="chat-msg-time">${timeStr}${badge}</div>`;
       } else {
         div.className = 'chat-msg nikita';
-        div.innerHTML = `<div class="chat-nk-avatar">NK</div><div><div class="chat-msg-text">${esc(text)}</div><div class="chat-msg-time">${chatTimeStr()}</div></div>`;
+        div.innerHTML = `<div class="chat-nk-avatar">NK</div><div><div class="chat-msg-text">${esc(text)}</div><div class="chat-msg-time">${timeStr}${badge}</div></div>`;
       }
       chatMessages.appendChild(div);
-      chatThread.classList.add('has-messages');
       chatThread.scrollTop = chatThread.scrollHeight;
       return div;
     }
@@ -3348,7 +3408,7 @@
 
       chatInput.value = '';
       chatSendBtn.disabled = true;
-      appendChatMsg('user', text);
+      appendChatMsg('user', text, 'dashboard');
 
       const typing = showTypingIndicator();
 
@@ -3362,7 +3422,8 @@
         typing.remove();
 
         if (data.reply) {
-          appendChatMsg('nikita', data.reply);
+          appendChatMsg('nikita', data.reply, 'dashboard');
+          speakNikita(data.reply);
         } else if (data.error) {
           appendChatMsg('nikita', `Something went wrong: ${data.error}`);
         }
@@ -3383,6 +3444,68 @@
       }
     });
 
+    // ─── ElevenLabs TTS ──────────────────────────────────
+    let _elevenlabsKey = null;
+
+    async function speakNikita(text) {
+      try {
+        if (_elevenlabsKey === null) {
+          const cfgRes = await fetch(`${API}/api/config/elevenlabs`);
+          const cfg = await cfgRes.json();
+          _elevenlabsKey = cfg.apiKey || '';
+        }
+        if (!_elevenlabsKey) return;
+
+        const voiceId = 'cgSgspJ2msm6clMCkdW9';
+        const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'xi-api-key': _elevenlabsKey,
+          },
+          body: JSON.stringify({
+            text,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.9,
+              style: 0.3,
+              speed: 0.92,
+            },
+          }),
+        });
+
+        if (!res.ok) return;
+
+        const arrayBuffer = await res.arrayBuffer();
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+      } catch (err) {
+        console.warn('[TTS] ElevenLabs speech failed:', err.message);
+      }
+    }
+
+    // ─── Load Chat History ───────────────────────────────
+    async function loadChatHistory() {
+      try {
+        const res = await fetch(`${API}/api/nikita/history`);
+        const history = await res.json();
+        if (Array.isArray(history) && history.length > 0) {
+          for (const msg of history) {
+            const role = msg.role === 'assistant' ? 'nikita' : 'user';
+            appendChatMsg(role, msg.content, msg.channel, msg.timestamp);
+          }
+        }
+      } catch (err) {
+        console.warn('[Chat] Failed to load history:', err.message);
+      }
+    }
+
+    loadChatHistory();
     init();
   </script>
 </body>

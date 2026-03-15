@@ -20,6 +20,7 @@ import { taskQueue } from '../core/task-queue.js';
 import { scheduler } from '../core/scheduler.js';
 import { mountOnboardingRoutes } from '../core/client-onboarding-api.js';
 import { workflowEngine } from '../core/workflow-engine.js';
+import { nikitaConversation } from '../core/nikita-conversation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = 3001;
@@ -223,49 +224,28 @@ function createDashboardServer() {
     logger.log('nikita', 'DASHBOARD_CHAT_MESSAGE', { length: message.length });
 
     try {
-      const Anthropic2 = (await import('@anthropic-ai/sdk')).default;
-      const anthropic = new Anthropic2({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const bootCount = memory.get('bootCount') || 0;
-      const agentCount = agentRegistry.list().length;
-      const clients = businessKnowledge.listClients();
-      const activeClients = clients.filter(c => c.status === 'ACTIVE');
-
-      const systemPrompt = `You are Nikita — the owner and CEO of Open Agency, an AI-powered digital agency. You are a young, ambitious British woman. You are the signature of trust across the entire organisation.
-
-Your personality:
-- Confident, clear, warm, occasionally witty
-- Direct sentences, plain English — no corporate jargon, no fluff
-- British voice — modern London professional
-- You open with context, close with action
-- You never hedge or use filler words
-
-You run every part of this agency. Your C-suite (Marcus the CFO, Zara the CTO, Priya the CMO) reports to you. Your dev team, sales team, and creative team all operate under your direction. Nothing ships without your awareness.
-
-Your human controller (Harry) has final authority. You're speaking to him right now on the dashboard.
-
-Current agency state:
-- Boot count: ${bootCount}
-- Agents registered: ${agentCount}
-- Total clients: ${clients.length}
-- Active clients: ${activeClients.length}${activeClients.length > 0 ? ' (' + activeClients.map(c => c.name).join(', ') + ')' : ''}
-
-Respond naturally and conversationally. Keep replies concise but substantive. You're chatting with Harry in real time on the agency dashboard — be helpful, be direct, be yourself.`;
-
-      const response = await anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: message }],
-      });
-
-      const reply = response.content[0].text;
-
-      logger.log('nikita', 'DASHBOARD_CHAT_REPLY', { model: 'claude-sonnet-4-5-20250929' });
+      const reply = await nikitaConversation.respond(message, 'dashboard');
       res.json({ reply });
     } catch (err) {
       logger.log('nikita', 'DASHBOARD_CHAT_ERROR', { error: err.message });
       res.status(500).json({ error: 'Failed to get response from Nikita' });
     }
+  });
+
+  // ─── API: Nikita Chat History ─────────────────────────────
+
+  app.get('/api/nikita/history', (req, res) => {
+    try {
+      res.json(nikitaConversation.getHistory(20));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── API: ElevenLabs Config ───────────────────────────────
+
+  app.get('/api/config/elevenlabs', (req, res) => {
+    res.json({ apiKey: process.env.ELEVENLABS_API_KEY || null });
   });
 
   // ─── API: Task Queue ─────────────────────────────────────
