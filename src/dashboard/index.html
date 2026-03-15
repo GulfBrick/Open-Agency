@@ -610,9 +610,9 @@
     .main {
       position: relative;
       z-index: 1;
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
       padding: 32px 40px;
       max-width: 1400px;
       margin: 0 auto;
@@ -622,6 +622,89 @@
       display: flex;
       flex-direction: column;
       gap: 0;
+    }
+
+    /* ─── Bottom Dashboard Grid ──────────────────────────── */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      padding: 32px 0;
+      padding-bottom: 100px;
+    }
+
+    .dash-card {
+      background: rgba(15, 22, 35, 0.5);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(124, 58, 237, 0.10);
+      border-radius: 16px;
+      padding: 22px 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .dash-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      border-radius: 16px 0 0 16px;
+    }
+
+    .dash-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.25), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .dash-card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 40px rgba(124, 58, 237, 0.08);
+      background: rgba(15, 22, 35, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .dash-card:hover::after { opacity: 1; }
+
+    /* Card accent colours */
+    .dash-card.card-financials::before { background: linear-gradient(180deg, var(--green), rgba(16, 185, 129, 0.2)); }
+    .dash-card.card-pipeline::before { background: linear-gradient(180deg, var(--amber), rgba(245, 158, 11, 0.2)); }
+    .dash-card.card-sprint::before { background: linear-gradient(180deg, var(--blue), rgba(59, 130, 246, 0.2)); }
+    .dash-card.card-clients::before { background: linear-gradient(180deg, var(--violet), rgba(124, 58, 237, 0.2)); }
+    .dash-card.card-schedules::before { background: linear-gradient(180deg, #A78BFA, rgba(167, 139, 250, 0.2)); }
+    .dash-card.card-activity::before { background: linear-gradient(180deg, var(--rose), rgba(244, 63, 94, 0.2)); }
+
+    .dash-card-title {
+      font-family: var(--heading);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dash-card-title .card-icon {
+      font-size: 14px;
+      filter: saturate(1.2);
+    }
+
+    .dash-card-title .card-badge {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
     }
 
     /* ─── The Building ─────────────────────────────────── */
@@ -1263,23 +1346,7 @@
       color: var(--violet-dim);
     }
 
-    /* ─── Right Sidebar ────────────────────────────────── */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      position: sticky;
-      top: 88px;
-      align-self: flex-start;
-      max-height: calc(100vh - 120px);
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
-    }
-
-    .sidebar::-webkit-scrollbar { width: 4px; }
-    .sidebar::-webkit-scrollbar-track { background: transparent; }
-    .sidebar::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.2); border-radius: 4px; }
+    /* ─── CEO Brief (above dashboard grid) ────────────── */
 
     /* ─── CEO Brief Panel ───────────────────────────────── */
     .ceo-brief {
@@ -1367,38 +1434,7 @@
       z-index: 1;
     }
 
-    /* ─── Sidebar Cards (Glassmorphism) ─────────────────── */
-    .sidebar-card {
-      background: rgba(15, 22, 35, 0.45);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(124, 58, 237, 0.10);
-      border-radius: 16px;
-      padding: 20px 24px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    }
-
-    .sidebar-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .sidebar-card:hover {
-      border-color: var(--card-hover-border);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 40px rgba(124, 58, 237, 0.06);
-      background: rgba(15, 22, 35, 0.55);
-    }
-
-    .sidebar-card:hover::before { opacity: 1; }
-
+    /* ─── Legacy sidebar-card class kept for JS compat ── */
     .sidebar-card-title {
       font-family: var(--heading);
       font-size: 11px;
@@ -1491,13 +1527,14 @@
 
     .finance-value {
       font-family: var(--mono);
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
 
     /* ─── Activity Ticker (Sidebar) ────────────────────── */
     .activity-ticker {
-      max-height: 340px;
+      max-height: 200px;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
@@ -1792,17 +1829,9 @@
 
     /* ─── Responsive ────────────────────────────────────── */
     @media (max-width: 1280px) {
-      .main {
-        grid-template-columns: 1fr;
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
-      .sidebar {
-        position: static;
-        max-height: none;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-      .ceo-brief { grid-column: 1 / -1; }
     }
 
     @media (max-width: 768px) {
@@ -1826,8 +1855,8 @@
       .floor-number { margin-bottom: 0; }
       .floor-desks { padding: 16px; }
       .ground-floor { grid-template-columns: 1fr 1fr; }
-      .sidebar { grid-template-columns: 1fr; }
-      .ceo-brief { grid-column: auto; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .ceo-brief-row { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
@@ -1836,6 +1865,298 @@
       .hero-scroll { display: none; }
       .ground-floor { grid-template-columns: 1fr; }
     }
+    /* ─── CEO Executive Floor ───────────────────────────── */
+    .floor.floor-ceo .floor-label::before {
+      background: linear-gradient(180deg, #F59E0B, #7C3AED, rgba(124, 58, 237, 0.2));
+    }
+
+    .floor.floor-ceo .floor-number-badge {
+      color: rgba(245, 158, 11, 0.20);
+    }
+
+    .floor.floor-ceo .floor-name {
+      background: linear-gradient(135deg, #F59E0B, #A78BFA);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .floor.floor-ceo .window-glow {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(124, 58, 237, 0.06));
+    }
+
+    .floor.floor-ceo {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.03), rgba(124, 58, 237, 0.03));
+    }
+
+    .floor.floor-ceo .floor-inner {
+      min-height: 170px;
+    }
+
+    .desk-avatar.ceo {
+      width: 60px;
+      height: 60px;
+      font-size: 18px;
+      background: linear-gradient(135deg, #7C3AED, #A78BFA, #F59E0B);
+      background-size: 200% 200%;
+      animation: ceoAvatarShift 4s ease-in-out infinite;
+      box-shadow: 0 0 24px rgba(124, 58, 237, 0.4), 0 0 48px rgba(245, 158, 11, 0.15);
+    }
+
+    .desk-avatar.ceo:hover {
+      box-shadow: 0 0 32px rgba(124, 58, 237, 0.5), 0 0 64px rgba(245, 158, 11, 0.25);
+      transform: scale(1.12);
+    }
+
+    .desk-avatar.ceo .status-indicator {
+      width: 12px;
+      height: 12px;
+    }
+
+    @keyframes ceoAvatarShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .ceo-desk .desk-name {
+      font-size: 13px;
+      font-weight: 700;
+      max-width: 100px;
+      background: linear-gradient(135deg, #F59E0B, #A78BFA);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ceo-desk .desk-role {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .ceo-desk .bubble {
+      max-width: 200px;
+      border: 1px solid rgba(245, 158, 11, 0.12);
+    }
+
+    .ceo-desk .desk-platform {
+      width: 76px;
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.06), rgba(124, 58, 237, 0.06));
+      border: 1px solid rgba(245, 158, 11, 0.08);
+    }
+
+    /* ─── CEO Chat Interface ───────────────────────────── */
+    .nikita-chat {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    .nikita-chat-thread {
+      max-height: 0;
+      overflow-y: auto;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 40px;
+      pointer-events: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
+    }
+
+    .nikita-chat-thread::-webkit-scrollbar { width: 4px; }
+    .nikita-chat-thread::-webkit-scrollbar-track { background: transparent; }
+    .nikita-chat-thread::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.2); border-radius: 4px; }
+
+    .nikita-chat-thread.has-messages {
+      max-height: 400px;
+      padding-top: 80px;
+      padding-bottom: 16px;
+    }
+
+    .nikita-chat-thread-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .nikita-chat-thread::before {
+      content: '';
+      position: sticky;
+      top: 0;
+      display: block;
+      height: 60px;
+      background: linear-gradient(180deg, var(--bg), transparent);
+      margin: -80px -40px 0;
+      padding: 0 40px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .chat-msg {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      animation: chatMsgIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes chatMsgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #7C3AED, #6D28D9);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-msg.nikita {
+      align-self: flex-start;
+      background: rgba(15, 22, 35, 0.95);
+      border: 1px solid rgba(124, 58, 237, 0.12);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-msg.nikita .chat-nk-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #F59E0B);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--heading);
+      font-weight: 800;
+      font-size: 10px;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .chat-msg.nikita .chat-msg-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-msg-time {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 4px;
+    }
+
+    .chat-msg.nikita .chat-msg-time {
+      color: var(--text-muted);
+    }
+
+    .chat-msg.typing .chat-msg-text::after {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 14px;
+      background: var(--violet);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .nikita-chat-bar {
+      background: rgba(10, 11, 20, 0.95);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(124, 58, 237, 0.10);
+      padding: 14px 40px;
+      pointer-events: auto;
+    }
+
+    .nikita-chat-bar-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(15, 22, 35, 0.8);
+      border: 1px solid rgba(124, 58, 237, 0.12);
+      border-radius: 14px;
+      padding: 4px 4px 4px 18px;
+      transition: border-color 0.2s;
+    }
+
+    .nikita-chat-bar-inner:focus-within {
+      border-color: rgba(124, 58, 237, 0.35);
+      box-shadow: 0 0 24px rgba(124, 58, 237, 0.06);
+    }
+
+    .nikita-chat-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 10px 0;
+    }
+
+    .nikita-chat-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .nikita-chat-send {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #7C3AED, #6D28D9);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .nikita-chat-send:hover {
+      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+      transform: scale(1.05);
+    }
+
+    .nikita-chat-send:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Push body content up so chat bar doesn't overlap */
+    body { padding-bottom: 80px; }
+
+    .toast {
+      bottom: 96px;
+    }
+
+    @media (max-width: 768px) {
+      .nikita-chat-bar { padding: 12px 16px; }
+      .nikita-chat-thread { padding: 0 16px; }
+      .chat-msg { max-width: 88%; }
+    }
+
   </style>
 </head>
 <body>
@@ -1907,6 +2228,22 @@
           <div class="rooftop-status" id="rooftop-status">
             <div class="dot"></div>
             <span>All Systems Operational</span>
+          </div>
+        </div>
+
+        <!-- FLOOR 5 — CEO OFFICE -->
+        <div class="floor floor-ceo" id="floor-ceo">
+          <div class="floor-inner">
+            <div class="floor-label">
+              <div class="floor-number-badge">05</div>
+              <div class="floor-icon">&#128081;</div>
+              <div class="floor-number">Floor 5</div>
+              <div class="floor-name">CEO &middot; Nikita &#128081;</div>
+            </div>
+            <div class="floor-desks" id="desks-ceo">
+              <div class="window-glow"></div>
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
           </div>
         </div>
 
@@ -2010,35 +2347,52 @@
 
     </div><!-- /.building-column -->
 
-    <!-- Right Sidebar -->
-    <div class="sidebar">
+    <!-- CEO Brief (full width above dashboard) -->
+    <div class="ceo-brief" id="ceo-brief" style="margin-top: 32px;">
+      <div class="ceo-brief-header">
+        <div class="ceo-brief-avatar">N</div>
+        <div class="ceo-brief-label">CEO Briefing</div>
+      </div>
+      <div class="ceo-brief-text empty" id="ceo-brief-text">Awaiting first briefing...</div>
+      <div class="ceo-brief-time" id="ceo-brief-time"></div>
+      <div class="ceo-brief-updated" id="ceo-brief-updated"></div>
+    </div>
 
-      <!-- CEO Brief -->
-      <div class="ceo-brief" id="ceo-brief">
-        <div class="ceo-brief-header">
-          <div class="ceo-brief-avatar">N</div>
-          <div class="ceo-brief-label">CEO Briefing</div>
+    <!-- Bottom Dashboard Command Centre -->
+    <section class="dashboard-grid">
+
+      <!-- Row 1: Financials | Sales Pipeline | Active Sprint -->
+
+      <!-- Financials -->
+      <div class="dash-card card-financials">
+        <div class="dash-card-title">
+          <span class="card-icon">&#163;</span> Financials
         </div>
-        <div class="ceo-brief-text empty" id="ceo-brief-text">Awaiting first briefing...</div>
-        <div class="ceo-brief-time" id="ceo-brief-time"></div>
-        <div class="ceo-brief-updated" id="ceo-brief-updated"></div>
+        <div class="finance-grid">
+          <div class="finance-item">
+            <div class="finance-label">Revenue</div>
+            <div class="finance-value color-green" id="fin-revenue">&pound;0</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Expenses</div>
+            <div class="finance-value color-rose" id="fin-expenses">&pound;0</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Profit</div>
+            <div class="finance-value" id="fin-profit">&pound;0</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Cash Position</div>
+            <div class="finance-value color-violet" id="fin-cash">&pound;0</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Recent Activity -->
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">
-          <span>Activity Log</span>
-          <span class="sidebar-card-badge" id="log-count">--</span>
+      <!-- Sales Pipeline -->
+      <div class="dash-card card-pipeline">
+        <div class="dash-card-title">
+          <span class="card-icon">&#128188;</span> Sales Pipeline
         </div>
-        <div class="activity-ticker" id="log-list">
-          <div class="loading"><div class="spinner"></div> Loading...</div>
-        </div>
-        <div class="sidebar-last-updated" id="log-last-updated"></div>
-      </div>
-
-      <!-- Pipeline -->
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">Sales Pipeline</div>
         <div class="pipeline-list" id="pipeline-chart">
           <div class="pipeline-row">
             <div class="pipeline-label">Hot</div>
@@ -2063,63 +2417,71 @@
         </div>
       </div>
 
-      <!-- Financials -->
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">Financials</div>
-        <div class="finance-grid">
-          <div class="finance-item">
-            <div class="finance-label">Revenue</div>
-            <div class="finance-value color-green" id="fin-revenue">&pound;0</div>
-          </div>
-          <div class="finance-item">
-            <div class="finance-label">Expenses</div>
-            <div class="finance-value color-rose" id="fin-expenses">&pound;0</div>
-          </div>
-          <div class="finance-item">
-            <div class="finance-label">Profit</div>
-            <div class="finance-value" id="fin-profit">&pound;0</div>
-          </div>
-          <div class="finance-item">
-            <div class="finance-label">Cash</div>
-            <div class="finance-value" id="fin-cash">&pound;0</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sprint -->
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">
-          <span>Active Sprint</span>
-          <span class="sidebar-card-badge" id="sprint-name">--</span>
+      <!-- Active Sprint -->
+      <div class="dash-card card-sprint">
+        <div class="dash-card-title">
+          <span class="card-icon">&#128640;</span> Active Sprint
+          <span class="card-badge" id="sprint-name">--</span>
         </div>
         <div id="sprint-content">
           <div style="color: var(--text-muted); font-size: 12px;">No active sprint</div>
         </div>
       </div>
 
-      <!-- Schedules -->
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">Scheduled Tasks</div>
-        <div class="schedule-list" id="schedule-list">
-          <div class="loading"><div class="spinner"></div> Loading...</div>
-        </div>
-      </div>
+      <!-- Row 2: Clients | Scheduled Tasks | Activity Log -->
 
       <!-- Clients -->
-      <div class="sidebar-card">
-        <div class="sidebar-card-title">Clients</div>
+      <div class="dash-card card-clients">
+        <div class="dash-card-title">
+          <span class="card-icon">&#128100;</span> Clients
+        </div>
         <div class="client-list" id="client-list">
           <div class="loading"><div class="spinner"></div> Loading...</div>
         </div>
       </div>
 
-    </div><!-- /.sidebar -->
+      <!-- Scheduled Tasks -->
+      <div class="dash-card card-schedules">
+        <div class="dash-card-title">
+          <span class="card-icon">&#128337;</span> Scheduled Tasks
+        </div>
+        <div class="schedule-list" id="schedule-list">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="dash-card card-activity">
+        <div class="dash-card-title">
+          <span class="card-icon">&#128196;</span> Activity Log
+          <span class="card-badge" id="log-count">--</span>
+        </div>
+        <div class="activity-ticker" id="log-list">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+        <div class="sidebar-last-updated" id="log-last-updated"></div>
+      </div>
+
+    </section>
 
   </main>
 
   <!-- Footer -->
   <div class="footer">
     <span>Open Agency</span> &copy; 2026 &middot; Intelligence at work.
+  </div>
+
+  <!-- Nikita Chat Interface -->
+  <div class="nikita-chat" id="nikita-chat">
+    <div class="nikita-chat-thread" id="nikita-chat-thread">
+      <div class="nikita-chat-thread-inner" id="nikita-chat-messages"></div>
+    </div>
+    <div class="nikita-chat-bar">
+      <div class="nikita-chat-bar-inner">
+        <input type="text" class="nikita-chat-input" id="nikita-chat-input" placeholder="Message Nikita..." autocomplete="off" />
+        <button class="nikita-chat-send" id="nikita-chat-send" title="Send">&#9654;</button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast -->
@@ -2134,6 +2496,7 @@
 
     // ─── Agent floor & bubble configuration ────────────────
     const FLOOR_CONFIG = {
+      'nikita':            { floor: 'ceo', name: 'Nikita', role: 'CEO', rank: 'Owner' },
       'creative-director': { floor: 'creative', name: 'Nova', role: 'Creative Director', rank: 'Director' },
       'designer':          { floor: 'creative', name: 'Iris', role: 'Designer', rank: 'Senior' },
       'video-editor':      { floor: 'creative', name: 'Finn', role: 'Video', rank: 'Specialist' },
@@ -2156,7 +2519,7 @@
       'cmo':               { floor: 'csuite', name: 'Priya', role: 'CMO', rank: 'C-Suite' },
     };
 
-    const AVATAR_CLASS = { creative: 'creative', sales: 'sales', dev: 'dev', csuite: 'csuite' };
+    const AVATAR_CLASS = { ceo: 'ceo', creative: 'creative', sales: 'sales', dev: 'dev', csuite: 'csuite' };
 
     // Track bubble text per agent (overridden by real log data when available)
     let agentBubbles = {};
@@ -2171,6 +2534,7 @@
     function getBubbleText(agentId) {
       // Show real log data if available, otherwise honest idle status
       if (agentBubbles[agentId]) return agentBubbles[agentId];
+      if (agentId === 'nikita') return 'Running the agency...';
       return 'Standing by';
     }
 
@@ -2421,7 +2785,7 @@
 
     // ─── Building Renderer ───────────────────────────────
     function renderBuilding(agents) {
-      const floors = { creative: [], sales: [], dev: [], csuite: [] };
+      const floors = { ceo: [], creative: [], sales: [], dev: [], csuite: [] };
 
       // Build agent status map from live data
       const statusMap = {};
@@ -2465,9 +2829,11 @@
           const onlineClass = a.online ? 'online' : 'offline';
           const deskOnlineClass = a.online ? 'is-online' : '';
           const firstName = a.name.split(/[\s-]/)[0];
+          const isCeo = a.avatarClass === 'ceo';
+          const deskExtra = isCeo ? ' ceo-desk' : '';
 
           return `
-            <div class="agent-desk ${deskOnlineClass}" data-agent-id="${esc(a.id)}">
+            <div class="agent-desk ${deskOnlineClass}${deskExtra}" data-agent-id="${esc(a.id)}">
               <div class="bubble">${esc(a.bubble)}</div>
               <div class="desk-surface">
                 <div class="desk-monitor">&#128187;</div>
@@ -2773,6 +3139,82 @@
         fetchSchedules();
       }, 10000);
     }
+
+    // ─── Nikita Chat ──────────────────────────────────
+    const chatInput = document.getElementById('nikita-chat-input');
+    const chatSendBtn = document.getElementById('nikita-chat-send');
+    const chatThread = document.getElementById('nikita-chat-thread');
+    const chatMessages = document.getElementById('nikita-chat-messages');
+
+    function chatTimeStr() {
+      return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function appendChatMsg(role, text) {
+      const div = document.createElement('div');
+      if (role === 'user') {
+        div.className = 'chat-msg user';
+        div.innerHTML = `<div class="chat-msg-text">${esc(text)}</div><div class="chat-msg-time">${chatTimeStr()}</div>`;
+      } else {
+        div.className = 'chat-msg nikita';
+        div.innerHTML = `<div class="chat-nk-avatar">NK</div><div><div class="chat-msg-text">${esc(text)}</div><div class="chat-msg-time">${chatTimeStr()}</div></div>`;
+      }
+      chatMessages.appendChild(div);
+      chatThread.classList.add('has-messages');
+      chatThread.scrollTop = chatThread.scrollHeight;
+      return div;
+    }
+
+    function showTypingIndicator() {
+      const div = document.createElement('div');
+      div.className = 'chat-msg nikita typing';
+      div.id = 'chat-typing';
+      div.innerHTML = `<div class="chat-nk-avatar">NK</div><div><div class="chat-msg-text"></div></div>`;
+      chatMessages.appendChild(div);
+      chatThread.scrollTop = chatThread.scrollHeight;
+      return div;
+    }
+
+    async function sendNikitaMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      chatInput.value = '';
+      chatSendBtn.disabled = true;
+      appendChatMsg('user', text);
+
+      const typing = showTypingIndicator();
+
+      try {
+        const res = await fetch(`${API}/api/nikita/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json();
+        typing.remove();
+
+        if (data.reply) {
+          appendChatMsg('nikita', data.reply);
+        } else if (data.error) {
+          appendChatMsg('nikita', `Something went wrong: ${data.error}`);
+        }
+      } catch (err) {
+        typing.remove();
+        appendChatMsg('nikita', `Connection error — I might be offline. Try again in a moment.`);
+      }
+
+      chatSendBtn.disabled = false;
+      chatInput.focus();
+    }
+
+    chatSendBtn.addEventListener('click', sendNikitaMessage);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendNikitaMessage();
+      }
+    });
 
     init();
   </script>
