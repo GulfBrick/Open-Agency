@@ -580,14 +580,14 @@
     .particle {
       position: absolute;
       width: 2px; height: 2px;
-      background: rgba(167, 139, 250, 0.6);
+      background: rgba(167, 139, 250, 0.8);
       border-radius: 50%;
       animation: particleFloat linear infinite;
     }
 
     .particle.star {
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: 0 0 4px rgba(167, 139, 250, 0.6);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 6px rgba(167, 139, 250, 0.8), 0 0 12px rgba(124, 58, 237, 0.3);
     }
 
     @keyframes particleFloat {
@@ -598,8 +598,8 @@
     }
 
     @keyframes particleTwinkle {
-      0%, 100% { opacity: 0.2; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.5); }
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.8); }
     }
 
     .particle.twinkle {
@@ -648,7 +648,7 @@
       opacity: 0.6;
     }
 
-    /* Building outer frame accent */
+    /* Building outer frame accent with corner L-shapes */
     .building::after {
       content: '';
       position: absolute;
@@ -659,10 +659,45 @@
       border-radius: 4px 4px 0 0;
     }
 
+    /* Corner accents (L-shaped borders at each corner) */
+    .building-corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .building-corner--tl {
+      top: -1px; left: -1px;
+      border-top: 3px solid rgba(124, 58, 237, 0.35);
+      border-left: 3px solid rgba(124, 58, 237, 0.35);
+      border-radius: 4px 0 0 0;
+    }
+
+    .building-corner--tr {
+      top: -1px; right: -1px;
+      border-top: 3px solid rgba(124, 58, 237, 0.35);
+      border-right: 3px solid rgba(124, 58, 237, 0.35);
+      border-radius: 0 4px 0 0;
+    }
+
+    .building-corner--bl {
+      bottom: -1px; left: -1px;
+      border-bottom: 3px solid rgba(124, 58, 237, 0.35);
+      border-left: 3px solid rgba(124, 58, 237, 0.35);
+    }
+
+    .building-corner--br {
+      bottom: -1px; right: -1px;
+      border-bottom: 3px solid rgba(124, 58, 237, 0.35);
+      border-right: 3px solid rgba(124, 58, 237, 0.35);
+    }
+
     /* ─── Rooftop ──────────────────────────────────────── */
     .rooftop {
-      background: linear-gradient(180deg, rgba(124, 58, 237, 0.15) 0%, rgba(15, 22, 35, 0.8) 100%);
-      padding: 48px 36px 36px;
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.18) 0%, rgba(15, 22, 35, 0.8) 100%);
+      padding: 56px 36px 40px;
       text-align: center;
       border-bottom: 2px solid rgba(124, 58, 237, 0.15);
       position: relative;
@@ -689,11 +724,32 @@
       animation: heroGlow 10s ease-in-out infinite alternate;
     }
 
+    .rooftop-monogram {
+      font-family: var(--heading);
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 4px;
+    }
+
+    .rooftop-monogram span {
+      background: linear-gradient(135deg, #fff 0%, #A78BFA 40%, #7C3AED 80%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 6s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.3));
+    }
+
     .rooftop-logo {
       font-family: var(--heading);
-      font-size: 36px;
-      font-weight: 800;
-      letter-spacing: -2px;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -1px;
       position: relative;
       z-index: 1;
     }
@@ -708,12 +764,12 @@
     }
 
     .rooftop-tagline {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-      margin-top: 6px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--violet);
+      margin-top: 8px;
+      letter-spacing: 1px;
       position: relative;
       z-index: 1;
     }
@@ -755,13 +811,21 @@
       background: rgba(255, 255, 255, 0.008);
     }
 
-    /* Floor separator line (looks like concrete divider) */
+    /* Floor separator line (concrete divider with gradient) */
     .floor::after {
       content: '';
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.04), transparent);
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(124, 58, 237, 0.06) 10%,
+        rgba(255, 255, 255, 0.07) 30%,
+        rgba(255, 255, 255, 0.09) 50%,
+        rgba(255, 255, 255, 0.07) 70%,
+        rgba(124, 58, 237, 0.06) 90%,
+        transparent 100%
+      );
     }
 
     .floor-inner {
@@ -775,6 +839,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: flex-start;
       padding: 20px 16px 20px 20px;
       border-right: 1px solid rgba(255, 255, 255, 0.03);
       position: relative;
@@ -792,9 +857,24 @@
     .floor.floor-dev .floor-label::before { background: linear-gradient(180deg, var(--blue), rgba(59, 130, 246, 0.2)); }
     .floor.floor-csuite .floor-label::before { background: linear-gradient(180deg, var(--violet), rgba(124, 58, 237, 0.2)); }
 
+    /* Large muted floor number badge */
+    .floor-number-badge {
+      font-family: var(--heading);
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+
+    .floor.floor-creative .floor-number-badge { color: rgba(244, 63, 94, 0.15); }
+    .floor.floor-sales .floor-number-badge { color: rgba(245, 158, 11, 0.15); }
+    .floor.floor-dev .floor-number-badge { color: rgba(59, 130, 246, 0.15); }
+    .floor.floor-csuite .floor-number-badge { color: rgba(124, 58, 237, 0.15); }
+
     .floor-icon {
-      font-size: 20px;
-      margin-bottom: 6px;
+      font-size: 22px;
+      margin-bottom: 4px;
       filter: saturate(1.2);
     }
 
@@ -810,8 +890,8 @@
 
     .floor-name {
       font-family: var(--heading);
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 800;
       letter-spacing: -0.3px;
     }
 
@@ -819,6 +899,35 @@
     .floor.floor-sales .floor-name { color: var(--amber); }
     .floor.floor-dev .floor-name { color: var(--blue); }
     .floor.floor-csuite .floor-name { color: var(--violet); }
+
+    /* Subtle floor texture (thin horizontal grid lines) */
+    .floor-desks::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 23px,
+          rgba(255, 255, 255, 0.015) 23px,
+          rgba(255, 255, 255, 0.015) 24px
+        );
+    }
+
+    /* Room divider between agents */
+    .agent-desk + .agent-desk::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+      pointer-events: none;
+    }
 
     /* Floor desks (right column) */
     .floor-desks {
@@ -849,11 +958,30 @@
     }
 
     .desk-monitor {
-      font-size: 9px;
-      color: var(--text-muted);
-      opacity: 0.5;
-      margin-bottom: 2px;
-      letter-spacing: 1px;
+      font-size: 14px;
+      margin-bottom: 3px;
+      position: relative;
+      line-height: 1;
+      filter: grayscale(0.3);
+      opacity: 0.6;
+      transition: opacity 0.3s, filter 0.3s;
+    }
+
+    /* Green glow on monitor when agent is online */
+    .agent-desk.is-online .desk-monitor {
+      opacity: 1;
+      filter: grayscale(0) drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+    }
+
+    .agent-desk.is-online .desk-monitor::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px; height: 14px;
+      background: radial-gradient(ellipse, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+      border-radius: 50%;
     }
 
     /* Speech bubble */
@@ -972,6 +1100,9 @@
       color: var(--text);
       text-align: center;
       white-space: nowrap;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .desk-role {
@@ -983,22 +1114,33 @@
 
     /* Desk platform (subtle desk surface below agent) */
     .desk-platform {
-      width: 52px;
-      height: 3px;
+      width: 64px;
+      height: 6px;
       margin-top: 4px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, 0.04);
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.035);
       position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.025);
     }
 
     .desk-platform::after {
       content: '';
       position: absolute;
-      top: 3px; left: 50%;
+      top: 6px; left: 50%;
       transform: translateX(-50%);
-      width: 40px;
+      width: 48px;
       height: 1px;
       background: rgba(255, 255, 255, 0.02);
+    }
+
+    .desk-platform::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 28px; height: 100%;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 2px;
     }
 
     /* Window glow behind desks */
@@ -1078,15 +1220,41 @@
     .color-rose { color: var(--rose); }
     .color-blue { color: var(--blue); }
 
-    /* ─── Building Footer ─────────────────────────────── */
+    /* ─── Building Foundation / Footer ────────────────── */
+    .building-foundation {
+      background: linear-gradient(180deg, rgba(15, 22, 35, 0.6) 0%, rgba(10, 11, 20, 0.95) 100%);
+      border-top: 3px solid rgba(124, 58, 237, 0.12);
+      padding: 6px 0 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .building-foundation::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.15), transparent);
+    }
+
+    .building-foundation-texture {
+      height: 8px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 20px,
+        rgba(255, 255, 255, 0.01) 20px,
+        rgba(255, 255, 255, 0.01) 40px
+      );
+    }
+
     .building-footer {
       text-align: center;
-      padding: 20px;
+      padding: 16px 20px;
       font-family: var(--mono);
       font-size: 11px;
       color: var(--text-muted);
-      background: rgba(15, 22, 35, 0.5);
-      border-top: 1px solid rgba(124, 58, 237, 0.06);
+      background: rgba(10, 11, 20, 0.8);
       position: relative;
       z-index: 1;
     }
@@ -1341,31 +1509,65 @@
 
     .log-entry {
       display: grid;
-      grid-template-columns: 60px 1fr;
+      grid-template-columns: 48px 1fr;
       gap: 10px;
-      padding: 7px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.025);
       font-family: var(--mono);
       font-size: 11px;
       transition: background 0.15s;
+      border-radius: 4px;
     }
 
     .log-entry:hover {
-      background: rgba(124, 58, 237, 0.02);
+      background: rgba(124, 58, 237, 0.04);
     }
 
     .log-time {
       color: var(--text-muted);
       font-size: 10px;
+      opacity: 0.6;
     }
 
     .log-text {
-      color: var(--text-dim);
+      color: var(--text);
+      line-height: 1.5;
     }
 
     .log-agent {
-      color: var(--violet);
       font-weight: 600;
+    }
+
+    /* Agent name colours in log by floor */
+    .log-agent.log-agent--creative { color: var(--rose); }
+    .log-agent.log-agent--sales { color: var(--amber); }
+    .log-agent.log-agent--dev { color: var(--blue); }
+    .log-agent.log-agent--csuite { color: var(--violet); }
+    .log-agent.log-agent--default { color: var(--violet); }
+
+    .log-action {
+      color: var(--text-dim);
+    }
+
+    /* Last updated timestamp */
+    .sidebar-last-updated {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.6;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.025);
+    }
+
+    .ceo-brief-updated {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      margin-top: 6px;
+      position: relative;
+      z-index: 1;
     }
 
     /* ─── Schedules (Sidebar) ──────────────────────────── */
@@ -1690,12 +1892,18 @@
     <!-- Building Column -->
     <div class="building-column">
       <div class="building">
+        <!-- Corner Accents -->
+        <div class="building-corner building-corner--tl"></div>
+        <div class="building-corner building-corner--tr"></div>
+        <div class="building-corner building-corner--bl"></div>
+        <div class="building-corner building-corner--br"></div>
 
         <!-- ROOFTOP -->
         <div class="rooftop">
           <div class="rooftop-particles" id="rooftop-particles"></div>
+          <div class="rooftop-monogram"><span>OA</span></div>
           <div class="rooftop-logo"><span>Open Agency</span></div>
-          <div class="rooftop-tagline">Intelligence at work</div>
+          <div class="rooftop-tagline">Intelligence at work.</div>
           <div class="rooftop-status" id="rooftop-status">
             <div class="dot"></div>
             <span>All Systems Operational</span>
@@ -1706,6 +1914,7 @@
         <div class="floor floor-creative" id="floor-creative">
           <div class="floor-inner">
             <div class="floor-label">
+              <div class="floor-number-badge">04</div>
               <div class="floor-icon">&#127912;</div>
               <div class="floor-number">Floor 4</div>
               <div class="floor-name">Creative</div>
@@ -1721,6 +1930,7 @@
         <div class="floor floor-sales" id="floor-sales">
           <div class="floor-inner">
             <div class="floor-label">
+              <div class="floor-number-badge">03</div>
               <div class="floor-icon">&#128188;</div>
               <div class="floor-number">Floor 3</div>
               <div class="floor-name">Sales</div>
@@ -1736,6 +1946,7 @@
         <div class="floor floor-dev" id="floor-dev">
           <div class="floor-inner">
             <div class="floor-label">
+              <div class="floor-number-badge">02</div>
               <div class="floor-icon">&#128640;</div>
               <div class="floor-number">Floor 2</div>
               <div class="floor-name">Dev Team</div>
@@ -1751,6 +1962,7 @@
         <div class="floor floor-csuite" id="floor-csuite">
           <div class="floor-inner">
             <div class="floor-label">
+              <div class="floor-number-badge">01</div>
               <div class="floor-icon">&#128081;</div>
               <div class="floor-number">Floor 1</div>
               <div class="floor-name">C-Suite</div>
@@ -1788,9 +2000,12 @@
 
       </div><!-- /.building -->
 
-      <!-- Building Footer -->
-      <div class="building-footer">
-        <span>Open Agency</span> &copy; 2026 &middot; Intelligence at work.
+      <!-- Building Foundation & Footer -->
+      <div class="building-foundation">
+        <div class="building-foundation-texture"></div>
+        <div class="building-footer">
+          <span>Open Agency</span> &copy; 2026 &middot; Intelligence at work.
+        </div>
       </div>
 
     </div><!-- /.building-column -->
@@ -1804,8 +2019,9 @@
           <div class="ceo-brief-avatar">N</div>
           <div class="ceo-brief-label">CEO Briefing</div>
         </div>
-        <div class="ceo-brief-text empty" id="ceo-brief-text">Awaiting briefing...</div>
+        <div class="ceo-brief-text empty" id="ceo-brief-text">Awaiting first briefing...</div>
         <div class="ceo-brief-time" id="ceo-brief-time"></div>
+        <div class="ceo-brief-updated" id="ceo-brief-updated"></div>
       </div>
 
       <!-- Recent Activity -->
@@ -1817,6 +2033,7 @@
         <div class="activity-ticker" id="log-list">
           <div class="loading"><div class="spinner"></div> Loading...</div>
         </div>
+        <div class="sidebar-last-updated" id="log-last-updated"></div>
       </div>
 
       <!-- Pipeline -->
@@ -1976,26 +2193,26 @@
       if (!container) return;
 
       // Floating particles
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 30; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         p.style.left = Math.random() * 100 + '%';
-        p.style.bottom = Math.random() * 30 + '%';
+        p.style.bottom = Math.random() * 40 + '%';
         p.style.animationDuration = (4 + Math.random() * 6) + 's';
         p.style.animationDelay = (Math.random() * 8) + 's';
-        p.style.width = (1 + Math.random() * 2) + 'px';
+        p.style.width = (1.5 + Math.random() * 2.5) + 'px';
         p.style.height = p.style.width;
-        p.style.opacity = 0.3 + Math.random() * 0.5;
+        p.style.opacity = 0.4 + Math.random() * 0.6;
         container.appendChild(p);
       }
 
       // Twinkling stars
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         const s = document.createElement('div');
         s.className = 'particle twinkle star';
         s.style.left = Math.random() * 100 + '%';
-        s.style.top = Math.random() * 60 + '%';
-        s.style.width = (1 + Math.random() * 2) + 'px';
+        s.style.top = Math.random() * 70 + '%';
+        s.style.width = (2 + Math.random() * 3) + 'px';
         s.style.height = s.style.width;
         s.style.animationDuration = (2 + Math.random() * 4) + 's';
         s.style.animationDelay = (Math.random() * 5) + 's';
@@ -2164,15 +2381,18 @@
     function renderCEOBrief(text) {
       const textEl = document.getElementById('ceo-brief-text');
       const timeEl = document.getElementById('ceo-brief-time');
+      const updatedEl = document.getElementById('ceo-brief-updated');
 
       if (text) {
         textEl.textContent = text;
         textEl.classList.remove('empty');
         timeEl.textContent = 'Latest briefing from Nikita';
+        if (updatedEl) updatedEl.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
       } else {
-        textEl.textContent = 'Awaiting briefing...';
+        textEl.textContent = 'Awaiting first briefing...';
         textEl.classList.add('empty');
         timeEl.textContent = '';
+        if (updatedEl) updatedEl.textContent = '';
       }
     }
 
@@ -2243,18 +2463,20 @@
         html += floorAgents.map(a => {
           const initials = a.name.split(/[\s()]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
           const onlineClass = a.online ? 'online' : 'offline';
+          const deskOnlineClass = a.online ? 'is-online' : '';
+          const firstName = a.name.split(/[\s-]/)[0];
 
           return `
-            <div class="agent-desk" data-agent-id="${esc(a.id)}">
+            <div class="agent-desk ${deskOnlineClass}" data-agent-id="${esc(a.id)}">
               <div class="bubble">${esc(a.bubble)}</div>
               <div class="desk-surface">
-                <div class="desk-monitor">&#9618;</div>
+                <div class="desk-monitor">&#128187;</div>
                 <div class="desk-avatar ${a.avatarClass} ${onlineClass}">
                   ${initials}
                   <div class="status-indicator ${onlineClass}"></div>
                 </div>
               </div>
-              <div class="desk-name">${esc(a.name)}</div>
+              <div class="desk-name">${esc(firstName)}</div>
               <div class="desk-role">${esc(a.role)}</div>
               <div class="desk-platform"></div>
             </div>`;
@@ -2412,14 +2634,21 @@
       container.innerHTML = reversed.map(log => {
         const time = new Date(log.timestamp);
         const timeStr = time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const agentConfig = FLOOR_CONFIG[log.agentId];
+        const floorClass = agentConfig ? `log-agent--${agentConfig.floor}` : 'log-agent--default';
+        const displayName = agentConfig ? agentConfig.name : log.agentId;
 
         return `
           <div class="log-entry">
             <span class="log-time">${timeStr}</span>
-            <span class="log-text"><span class="log-agent">${esc(log.agentId)}</span> ${esc(log.action)}</span>
+            <span class="log-text"><span class="log-agent ${floorClass}">${esc(displayName)}</span> <span class="log-action">${esc(log.action)}</span></span>
           </div>
         `;
       }).join('');
+
+      // Update last-updated timestamp
+      const logUpdatedEl = document.getElementById('log-last-updated');
+      if (logUpdatedEl) logUpdatedEl.textContent = 'Last updated ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
     // ─── Uptime ─────────────────────────────────────────
