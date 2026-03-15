@@ -7,6 +7,7 @@
  */
 
 import express from 'express';
+import cors from 'cors';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -28,6 +29,11 @@ const PORT = 3001;
 
 function createDashboardServer() {
   const app = express();
+  app.use(cors({
+    origin: ['https://oagencyconsulting.com', 'https://www.oagencyconsulting.com', 'http://localhost:3000', 'http://localhost:3001'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'X-API-Key'],
+  }));
   app.use(express.json());
   app.use('/assets', express.static(join(__dirname, 'assets')));
 
