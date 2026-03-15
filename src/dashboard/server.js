@@ -30,7 +30,20 @@ const PORT = 3001;
 function createDashboardServer() {
   const app = express();
   app.use(cors({
-    origin: ['https://oagencyconsulting.com', 'https://www.oagencyconsulting.com', 'http://localhost:3000', 'http://localhost:3001'],
+    origin: function (origin, callback) {
+      const allowed = [
+        'https://oagencyconsulting.com',
+        'https://www.oagencyconsulting.com',
+        'http://localhost:3000',
+        'http://localhost:3001',
+      ];
+      // Allow Vercel preview/production deployments
+      if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'X-API-Key'],
   }));
