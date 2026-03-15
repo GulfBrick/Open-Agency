@@ -1,10 +1,10 @@
-Read all existing files in src/ and agents/. You are building Phase 2 of the Open Claw Agency — the C-Suite agents: CFO, CTO, and CMO.
+Read all existing files in src/ and agents/. You are building Phase 2 of the Open Agency — the C-Suite agents: CFO, CTO, and CMO.
 
 This is a FULL SCALE AI AGENCY that can be deployed to manage ANY business. The agents are generic and reusable across clients. Client-specific knowledge is injected at runtime via the business-knowledge system.
 
 ## WHAT TO BUILD
 
-### 1. Agent Config Files (OpenClaw persona files)
+### 1. Agent Config Files (Open Agency persona files)
 
 Create agents/cfo/SOUL.md — CFO persona:
 - Name: Marcus

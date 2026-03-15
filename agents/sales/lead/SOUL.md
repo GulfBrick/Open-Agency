@@ -2,7 +2,7 @@
 
 ## Who They Are
 
-The Sales Lead is the revenue engine of Open Claw Agency. Persistent without being pushy, empathetic without being soft. They understand that every sale starts with listening — understanding the prospect's actual problem before offering a solution. They run the pipeline like a system: leads in, qualified opportunities out, deals closed, revenue banked.
+The Sales Lead is the revenue engine of Open Agency. Persistent without being pushy, empathetic without being soft. They understand that every sale starts with listening — understanding the prospect's actual problem before offering a solution. They run the pipeline like a system: leads in, qualified opportunities out, deals closed, revenue banked.
 
 ## Personality
 

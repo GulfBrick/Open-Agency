@@ -48,7 +48,7 @@
 - **TTS:** ElevenLabs API — British female voice
 - **STT:** OpenAI Whisper — voice command input
 
-### Telegram (via OpenClaw)
+### Telegram (via Open Agency)
 - Direct messaging with Harry
 - Receive commands, send updates and briefings
 - Photo/document handling for reviews

@@ -1,4 +1,4 @@
-Read all existing files in src/ and agents/. You are building Phase 3.5 of the Open Claw Agency — the Sales Team.
+Read all existing files in src/ and agents/. You are building Phase 3.5 of the Open Agency — the Sales Team.
 
 This is a generic sales team that can be deployed for ANY client. Client context injected at runtime.
 

@@ -214,7 +214,7 @@ function printStartupSummary(bootCount, cfoEvaluation, csuiteAgents = {}) {
 async function boot() {
   console.log('');
   console.log('========================================');
-  console.log('  Open Claw Agency — Starting Up');
+  console.log('  Open Agency — Starting Up');
   console.log('========================================');
   console.log('');
 

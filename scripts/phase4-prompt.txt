@@ -1,4 +1,4 @@
-Read all existing files in src/ and agents/. You are building Phase 4 of the Open Claw Agency — the Creative Team.
+Read all existing files in src/ and agents/. You are building Phase 4 of the Open Agency — the Creative Team.
 
 This is a generic creative team deployable for ANY client. Client context and brand guidelines injected at runtime.
 

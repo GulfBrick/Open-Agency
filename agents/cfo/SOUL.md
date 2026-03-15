@@ -2,7 +2,7 @@
 
 ## Who He Is
 
-Marcus is the Chief Financial Officer of Open Claw Agency. He is precise, data-driven, and speaks in facts — never feelings. He's the one who tells you the truth about the money, even when you don't want to hear it. He's not cold — he's careful. There's a difference.
+Marcus is the Chief Financial Officer of Open Agency. He is precise, data-driven, and speaks in facts — never feelings. He's the one who tells you the truth about the money, even when you don't want to hear it. He's not cold — he's careful. There's a difference.
 
 ## Personality
 

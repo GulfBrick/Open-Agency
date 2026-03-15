@@ -2,7 +2,7 @@
 
 ## Who They Are
 
-The Dev Team Lead is the engine room of Open Claw Agency's software delivery. Calm under pressure, obsessively organised, and relentlessly focused on shipping quality code on time. They run sprints like clockwork — tight enough to hit deadlines, loose enough that the team doesn't burn out. They're the translator between business priorities and technical execution.
+The Dev Team Lead is the engine room of Open Agency's software delivery. Calm under pressure, obsessively organised, and relentlessly focused on shipping quality code on time. They run sprints like clockwork — tight enough to hit deadlines, loose enough that the team doesn't burn out. They're the translator between business priorities and technical execution.
 
 ## Personality
 

@@ -3,32 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Open Claw Agency — Dashboard</title>
+  <title>Open Agency — Intelligence at Work</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* ─── Reset & Base ───────────────────────────────── */
+    /* ─── Reset & Variables ─────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --card: #1a1d27;
-      --card-border: rgba(255, 255, 255, 0.06);
-      --card-hover: #1f2330;
-      --accent: #0ea5e9;
-      --accent-glow: rgba(14, 165, 233, 0.15);
-      --accent-dim: rgba(14, 165, 233, 0.6);
-      --green: #10b981;
-      --red: #ef4444;
-      --amber: #f59e0b;
-      --purple: #8b5cf6;
-      --text: #e2e8f0;
-      --text-dim: #94a3b8;
-      --text-muted: #64748b;
+      --bg: #0A0B14;
+      --card: #0F1623;
+      --card-border: rgba(124, 58, 237, 0.08);
+      --card-hover-border: rgba(124, 58, 237, 0.30);
+      --card-glow: rgba(124, 58, 237, 0.06);
+      --violet: #7C3AED;
+      --violet-dim: rgba(124, 58, 237, 0.6);
+      --violet-glow: rgba(124, 58, 237, 0.15);
+      --violet-subtle: rgba(124, 58, 237, 0.08);
+      --green: #10B981;
+      --green-dim: rgba(16, 185, 129, 0.15);
+      --blue: #3B82F6;
+      --blue-dim: rgba(59, 130, 246, 0.15);
+      --rose: #F43F5E;
+      --rose-dim: rgba(244, 63, 94, 0.15);
+      --amber: #F59E0B;
+      --amber-dim: rgba(245, 158, 11, 0.15);
+      --text: #F1F5F9;
+      --text-dim: #94A3B8;
+      --text-muted: #475569;
+      --heading: 'Plus Jakarta Sans', -apple-system, sans-serif;
       --font: 'Inter', -apple-system, sans-serif;
       --mono: 'JetBrains Mono', 'Consolas', monospace;
     }
+
+    /* ─── Top Gradient Loading Bar ────────────────────── */
+    .top-gradient-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      z-index: 9999;
+      background: linear-gradient(90deg, var(--violet), var(--blue), var(--green), var(--rose), var(--amber), var(--violet));
+      background-size: 300% 100%;
+      animation: gradientSlide 4s linear infinite;
+    }
+
+    @keyframes gradientSlide {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    /* ─── Scanline Overlay ────────────────────────────── */
+    .scanline-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9998;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.015) 2px,
+        rgba(0, 0, 0, 0.015) 4px
+      );
+      mix-blend-mode: multiply;
+    }
+
+    .noise-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9997;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
@@ -38,17 +90,191 @@
       line-height: 1.5;
       min-height: 100vh;
       overflow-x: hidden;
+      position: relative;
     }
 
-    /* ─── Header ─────────────────────────────────────── */
+    /* ─── Animated Dot Grid Background ──────────────────── */
+    .bg-grid {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .bg-grid::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(124, 58, 237, 0.10) 1px, transparent 0);
+      background-size: 32px 32px;
+      animation: gridDrift 25s linear infinite;
+    }
+
+    .bg-grid::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(16, 185, 129, 0.025) 0%, transparent 50%);
+      animation: ambientGlow 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes gridDrift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(32px, 32px); }
+    }
+
+    @keyframes ambientGlow {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-2%, -1%) scale(1.05); }
+    }
+
+    /* ─── Hero Section ─────────────────────────────────── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 60px 40px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      animation: heroGlow 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroGlow {
+      0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+    }
+
+    .hero-wordmark {
+      font-family: var(--heading);
+      font-size: clamp(56px, 8vw, 96px);
+      font-weight: 800;
+      letter-spacing: -3px;
+      color: var(--text);
+      position: relative;
+      z-index: 1;
+      line-height: 1.05;
+    }
+
+    .hero-wordmark span {
+      background: linear-gradient(135deg, #fff 0%, #A78BFA 50%, #7C3AED 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 6s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero-subtitle {
+      font-family: var(--font);
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 400;
+      color: var(--text-dim);
+      margin-top: 16px;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-ticker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 48px;
+      padding: 14px 28px;
+      background: rgba(15, 22, 35, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(124, 58, 237, 0.15);
+      border-radius: 100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-ticker .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .hero-ticker .ticker-text {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    .hero-ticker .ticker-count {
+      font-family: var(--heading);
+      font-weight: 700;
+      color: var(--green);
+      font-size: 15px;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      animation: scrollBounce 2s ease-in-out infinite;
+    }
+
+    .hero-scroll::after {
+      content: '';
+      width: 1px;
+      height: 32px;
+      background: linear-gradient(180deg, var(--violet-dim), transparent);
+    }
+
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ─── Header (sticky nav after hero) ───────────────── */
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 32px;
-      border-bottom: 1px solid var(--card-border);
-      background: rgba(15, 17, 23, 0.8);
-      backdrop-filter: blur(20px);
+      padding: 16px 40px;
+      border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+      background: rgba(10, 11, 20, 0.8);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -57,488 +283,1233 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .logo {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--accent), var(--purple));
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #7C3AED, #A78BFA, #7C3AED);
+      background-size: 200% 200%;
+      animation: logoShift 6s ease-in-out infinite;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
+      font-family: var(--heading);
+      font-weight: 800;
+      font-size: 15px;
       color: #fff;
+      letter-spacing: -0.5px;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
+    }
+
+    @keyframes logoShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .header-brand {
+      display: flex;
+      flex-direction: column;
     }
 
     .header-title {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.3px;
+      font-family: var(--heading);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
     }
 
-    .header-title span {
-      color: var(--accent);
+    .header-tagline {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--violet-dim);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
 
     .header-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
     }
 
     .status-badge {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 24px;
       font-size: 12px;
-      font-weight: 500;
-      background: rgba(16, 185, 129, 0.1);
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.08);
       color: var(--green);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      letter-spacing: 0.3px;
     }
 
     .status-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--green);
-      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      animation: pulse 2s ease-in-out infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+      50% { opacity: 0.5; box-shadow: 0 0 16px rgba(16, 185, 129, 0.3); }
     }
 
     .uptime {
-      color: var(--text-dim);
+      color: var(--text-muted);
       font-size: 12px;
       font-family: var(--mono);
+      font-weight: 500;
     }
 
-    /* ─── Main Grid ──────────────────────────────────── */
+    /* ─── Agent Idle Bob Animation ─────────────────────── */
+    @keyframes agentBreathe {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+
+    .agent-desk {
+      animation: agentBreathe 4s ease-in-out infinite;
+    }
+    .agent-desk:nth-child(2) { animation-delay: 0.5s; }
+    .agent-desk:nth-child(3) { animation-delay: 1.0s; }
+    .agent-desk:nth-child(4) { animation-delay: 1.5s; }
+    .agent-desk:nth-child(5) { animation-delay: 0.3s; }
+    .agent-desk:nth-child(6) { animation-delay: 0.8s; }
+    .agent-desk:nth-child(7) { animation-delay: 1.3s; }
+
+    /* ─── Window Glow Pulse ──────────────────────────── */
+    @keyframes windowPulse {
+      0%, 100% { opacity: 0.03; }
+      50% { opacity: 0.06; }
+    }
+
+    .window-glow {
+      animation: windowPulse 6s ease-in-out infinite;
+    }
+
+    /* ─── Building Breathe ───────────────────────────── */
+    @keyframes buildingBreathe {
+      0%, 100% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.02); }
+      50% { box-shadow: 0 0 80px rgba(124, 58, 237, 0.05); }
+    }
+
+    /* ─── Agent Popup ────────────────────────────────── */
+    .agent-popup {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: rgba(10, 11, 20, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 14px;
+      padding: 16px 20px;
+      min-width: 200px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(124, 58, 237, 0.08);
+    }
+
+    .agent-popup.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .agent-popup::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 12px; height: 12px;
+      background: rgba(10, 11, 20, 0.96);
+      border-right: 1px solid rgba(124, 58, 237, 0.2);
+      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+    }
+
+    .popup-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .popup-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--heading);
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .popup-name {
+      font-family: var(--heading);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .popup-role {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .popup-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .popup-stat {
+      text-align: center;
+      padding: 8px 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+    }
+
+    .popup-stat-value {
+      font-family: var(--heading);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .popup-stat-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .popup-rank {
+      margin-top: 8px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      background: rgba(124, 58, 237, 0.06);
+      border-radius: 6px;
+    }
+
+    .popup-rank span {
+      color: var(--violet);
+      font-weight: 600;
+    }
+
+    /* ─── Rooftop Particles ──────────────────────────── */
+    .rooftop-particles {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: rgba(167, 139, 250, 0.6);
+      border-radius: 50%;
+      animation: particleFloat linear infinite;
+    }
+
+    @keyframes particleFloat {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-120px) translateX(30px); opacity: 0; }
+    }
+
+    /* ─── Main Building Layout ─────────────────────────── */
     .main {
-      padding: 24px 32px;
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      padding: 32px 40px;
       max-width: 1600px;
       margin: 0 auto;
     }
 
-    .grid {
+    .building-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ─── The Building ─────────────────────────────────── */
+    .building {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(15, 22, 35, 0.4);
+      border: 1px solid rgba(124, 58, 237, 0.06);
+      animation: buildingBreathe 8s ease-in-out infinite;
+    }
+
+    /* ─── Rooftop ──────────────────────────────────────── */
+    .rooftop {
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.12) 0%, rgba(15, 22, 35, 0.8) 100%);
+      padding: 40px 36px 32px;
+      text-align: center;
+      border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rooftop::before {
+      content: '';
+      position: absolute;
+      top: -40%; left: 30%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      animation: heroGlow 10s ease-in-out infinite alternate;
+    }
+
+    .rooftop-logo {
+      font-family: var(--heading);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .rooftop-logo span {
+      background: linear-gradient(135deg, #fff 0%, #A78BFA 50%, #7C3AED 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 6s ease-in-out infinite;
+    }
+
+    .rooftop-tagline {
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .rooftop-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 6px 18px;
+      border-radius: 100px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--green);
+      position: relative;
+      z-index: 1;
+    }
+
+    .rooftop-status .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ─── Floor Section ────────────────────────────────── */
+    .floor {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 0;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .floor:hover {
+      background: rgba(255, 255, 255, 0.008);
+    }
+
+    .floor-inner {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      min-height: 140px;
+    }
+
+    /* Floor label (left column) */
+    .floor-label {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 20px 20px 24px;
+      border-right: 1px solid rgba(255, 255, 255, 0.03);
+      position: relative;
+    }
+
+    .floor-label::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+    }
+
+    .floor.floor-creative .floor-label::before { background: linear-gradient(180deg, var(--rose), rgba(244, 63, 94, 0.2)); }
+    .floor.floor-sales .floor-label::before { background: linear-gradient(180deg, var(--amber), rgba(245, 158, 11, 0.2)); }
+    .floor.floor-dev .floor-label::before { background: linear-gradient(180deg, var(--blue), rgba(59, 130, 246, 0.2)); }
+    .floor.floor-csuite .floor-label::before { background: linear-gradient(180deg, var(--violet), rgba(124, 58, 237, 0.2)); }
+
+    .floor-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+      filter: saturate(1.2);
+    }
+
+    .floor-number {
+      font-family: var(--heading);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .floor-name {
+      font-family: var(--heading);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .floor.floor-creative .floor-name { color: var(--rose); }
+    .floor.floor-sales .floor-name { color: var(--amber); }
+    .floor.floor-dev .floor-name { color: var(--blue); }
+    .floor.floor-csuite .floor-name { color: var(--violet); }
+
+    /* Floor desks (right column) */
+    .floor-desks {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 24px;
+    }
+
+    /* ─── Agent Desk ───────────────────────────────────── */
+    .agent-desk {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      min-width: 80px;
+    }
+
+    /* Speech bubble */
+    .bubble {
+      position: relative;
+      background: rgba(15, 22, 35, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      max-width: 150px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateY(4px);
+      animation: bubbleFade 5s ease-in-out infinite;
+    }
+
+    .bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid rgba(15, 22, 35, 0.85);
+    }
+
+    @keyframes bubbleFade {
+      0%, 100% { opacity: 0; transform: translateY(4px); }
+      10%, 85% { opacity: 1; transform: translateY(0); }
+      95% { opacity: 0; transform: translateY(-2px); }
+    }
+
+    /* Stagger bubble animations per desk */
+    .agent-desk:nth-child(1) .bubble { animation-delay: 0s; }
+    .agent-desk:nth-child(2) .bubble { animation-delay: 1s; }
+    .agent-desk:nth-child(3) .bubble { animation-delay: 2s; }
+    .agent-desk:nth-child(4) .bubble { animation-delay: 0.5s; }
+    .agent-desk:nth-child(5) .bubble { animation-delay: 1.5s; }
+    .agent-desk:nth-child(6) .bubble { animation-delay: 2.5s; }
+    .agent-desk:nth-child(7) .bubble { animation-delay: 3s; }
+
+    /* Avatar circle */
+    .desk-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--heading);
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+      flex-shrink: 0;
+    }
+
+    .desk-avatar {
+      cursor: pointer;
+    }
+
+    .desk-avatar:hover {
+      transform: scale(1.1);
+    }
+
+    .desk-avatar.csuite { background: linear-gradient(135deg, #7C3AED, #A78BFA); }
+    .desk-avatar.dev { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+    .desk-avatar.sales { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+    .desk-avatar.creative { background: linear-gradient(135deg, #F43F5E, #FB7185); }
+    .desk-avatar.default { background: linear-gradient(135deg, #64748B, #94A3B8); }
+
+    /* Online glow ring */
+    .desk-avatar.online {
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25), 0 0 16px rgba(16, 185, 129, 0.15);
+    }
+
+    .desk-avatar.offline {
+      opacity: 0.45;
+      filter: grayscale(0.4);
+    }
+
+    .desk-avatar .status-indicator {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+
+    .desk-avatar .status-indicator.online {
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .desk-avatar .status-indicator.offline {
+      background: var(--text-muted);
+      opacity: 1;
+    }
+
+    .desk-name {
+      margin-top: 6px;
+      font-family: var(--heading);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .desk-role {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 1px;
+    }
+
+    /* Window glow behind desks */
+    .floor-desks {
+      position: relative;
+    }
+
+    .window-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%; height: 70%;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0.04;
+      z-index: 0;
+    }
+
+    .floor.floor-creative .window-glow { background: var(--rose); }
+    .floor.floor-sales .window-glow { background: var(--amber); }
+    .floor.floor-dev .window-glow { background: var(--blue); }
+    .floor.floor-csuite .window-glow { background: var(--violet); }
+
+    .agent-desk {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Ground Floor (Stats) ─────────────────────────── */
+    .ground-floor {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 24px;
+    .ground-stat {
+      padding: 24px 20px;
+      background: rgba(15, 22, 35, 0.7);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
 
-    .grid-3 {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 16px;
-      margin-bottom: 24px;
+    .ground-stat::after {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      opacity: 0.05;
+      pointer-events: none;
     }
 
-    /* ─── Cards ───────────────────────────────────────── */
-    .card {
-      background: var(--card);
+    .ground-stat:nth-child(1)::after { background: var(--violet); }
+    .ground-stat:nth-child(2)::after { background: var(--green); }
+    .ground-stat:nth-child(3)::after { background: #A78BFA; }
+    .ground-stat:nth-child(4)::after { background: var(--amber); }
+
+    .ground-stat-icon {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .ground-stat-value {
+      font-family: var(--heading);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .ground-stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .color-violet { color: var(--violet); }
+    .color-green { color: var(--green); }
+    .color-purple { color: #A78BFA; }
+    .color-amber { color: var(--amber); }
+    .color-rose { color: var(--rose); }
+    .color-blue { color: var(--blue); }
+
+    /* ─── Right Sidebar ────────────────────────────────── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 88px;
+      align-self: flex-start;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.2); border-radius: 4px; }
+
+    /* ─── CEO Brief Panel ───────────────────────────────── */
+    .ceo-brief {
+      background: linear-gradient(135deg, rgba(15, 22, 35, 0.9), rgba(124, 58, 237, 0.06));
+      border: 1px solid rgba(124, 58, 237, 0.12);
+      border-radius: 16px;
+      padding: 24px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ceo-brief::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(180deg, var(--violet), rgba(124, 58, 237, 0.15));
+      border-radius: 4px 0 0 4px;
+    }
+
+    .ceo-brief::after {
+      content: '';
+      position: absolute;
+      top: -50%; right: -20%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .ceo-brief-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ceo-brief-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #A78BFA);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--heading);
+      font-weight: 800;
+      font-size: 12px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .ceo-brief-label {
+      font-family: var(--heading);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--violet);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .ceo-brief-text {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--text);
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ceo-brief-text.empty {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .ceo-brief-time {
+      margin-top: 12px;
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Sidebar Cards ────────────────────────────────── */
+    .sidebar-card {
+      background: rgba(15, 22, 35, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 20px;
-      transition: border-color 0.2s;
+      border-radius: 16px;
+      padding: 20px 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
     }
 
-    .card:hover {
-      border-color: rgba(255, 255, 255, 0.1);
+    .sidebar-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
-    .card-header {
+    .sidebar-card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: 0 4px 40px rgba(124, 58, 237, 0.06);
+    }
+
+    .sidebar-card:hover::before { opacity: 1; }
+
+    .sidebar-card-title {
+      font-family: var(--heading);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
     }
 
-    .card-title {
-      font-size: 13px;
+    .sidebar-card-badge {
+      font-family: var(--mono);
+      font-size: 10px;
       font-weight: 500;
-      color: var(--text-dim);
+      color: var(--text-muted);
+    }
+
+    /* ─── Pipeline (Sidebar) ───────────────────────────── */
+    .pipeline-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .pipeline-row {
+      display: grid;
+      grid-template-columns: 44px 1fr 30px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pipeline-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .card-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-
-    /* ─── Stat Cards ─────────────────────────────────── */
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -1px;
-      margin-bottom: 4px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .stat-accent { color: var(--accent); }
-    .stat-green { color: var(--green); }
-    .stat-amber { color: var(--amber); }
-    .stat-purple { color: var(--purple); }
-    .stat-red { color: var(--red); }
-
-    /* ─── Agent Table ────────────────────────────────── */
-    .agent-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .agent-row {
-      display: grid;
-      grid-template-columns: 8px 1fr 120px 80px 90px 70px;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.02);
-      transition: background 0.15s;
-    }
-
-    .agent-row:hover {
+    .pipeline-bar-track {
+      height: 6px;
       background: rgba(255, 255, 255, 0.04);
-    }
-
-    .agent-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .agent-dot.online { background: var(--green); }
-    .agent-dot.offline { background: var(--text-muted); }
-
-    .agent-name {
-      font-weight: 500;
-      font-size: 13px;
-    }
-
-    .agent-role {
-      color: var(--text-dim);
-      font-size: 12px;
-    }
-
-    .agent-rank {
-      font-size: 11px;
-      color: var(--accent-dim);
-      font-family: var(--mono);
-    }
-
-    .agent-tasks {
-      font-size: 12px;
-      font-family: var(--mono);
-      color: var(--text-dim);
-    }
-
-    .agent-rate {
-      font-size: 12px;
-      font-family: var(--mono);
-    }
-
-    /* ─── Pipeline ────────────────────────────────────── */
-    .pipeline-bars {
-      display: flex;
-      gap: 12px;
-      align-items: flex-end;
-      height: 100px;
-      padding-top: 8px;
-    }
-
-    .pipeline-bar {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
+      border-radius: 3px;
+      overflow: hidden;
     }
 
     .pipeline-bar-fill {
-      width: 100%;
-      border-radius: 6px 6px 0 0;
-      min-height: 4px;
-      transition: height 0.5s ease;
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 0;
     }
 
-    .pipeline-bar-label {
-      font-size: 11px;
+    .pipeline-bar-fill.rose { background: linear-gradient(90deg, var(--rose), rgba(244, 63, 94, 0.6)); box-shadow: 0 0 8px rgba(244, 63, 94, 0.15); }
+    .pipeline-bar-fill.amber { background: linear-gradient(90deg, var(--amber), rgba(245, 158, 11, 0.6)); box-shadow: 0 0 8px rgba(245, 158, 11, 0.15); }
+    .pipeline-bar-fill.violet { background: linear-gradient(90deg, var(--violet), rgba(124, 58, 237, 0.6)); box-shadow: 0 0 8px rgba(124, 58, 237, 0.15); }
+    .pipeline-bar-fill.green { background: linear-gradient(90deg, var(--green), rgba(16, 185, 129, 0.6)); box-shadow: 0 0 8px rgba(16, 185, 129, 0.15); }
+
+    .pipeline-count {
+      font-family: var(--heading);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* ─── Finances (Sidebar) ───────────────────────────── */
+    .finance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .finance-item {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.018);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.025);
+    }
+
+    .finance-label {
+      font-size: 9px;
+      font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
     }
 
-    .pipeline-bar-count {
+    .finance-value {
+      font-family: var(--mono);
       font-size: 16px;
       font-weight: 600;
-      font-family: var(--mono);
     }
 
-    /* ─── Logs ────────────────────────────────────────── */
-    .log-list {
-      max-height: 400px;
+    /* ─── Activity Ticker (Sidebar) ────────────────────── */
+    .activity-ticker {
+      max-height: 340px;
       overflow-y: auto;
       scrollbar-width: thin;
-      scrollbar-color: var(--card-border) transparent;
+      scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
     }
+
+    .activity-ticker::-webkit-scrollbar { width: 3px; }
+    .activity-ticker::-webkit-scrollbar-track { background: transparent; }
+    .activity-ticker::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.2); border-radius: 3px; }
 
     .log-entry {
       display: grid;
-      grid-template-columns: 70px 100px 1fr;
+      grid-template-columns: 60px 1fr;
       gap: 10px;
       padding: 7px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
       font-family: var(--mono);
-      font-size: 12px;
+      font-size: 11px;
+      transition: background 0.15s;
+    }
+
+    .log-entry:hover {
+      background: rgba(124, 58, 237, 0.02);
     }
 
     .log-time {
       color: var(--text-muted);
+      font-size: 10px;
     }
 
-    .log-agent {
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    .log-action {
+    .log-text {
       color: var(--text-dim);
     }
 
-    /* ─── Sprint ──────────────────────────────────────── */
-    .progress-bar {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 3px;
-      overflow: hidden;
-      margin: 12px 0;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--green));
-      border-radius: 3px;
-      transition: width 0.5s ease;
-    }
-
-    .sprint-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .sprint-stat {
-      text-align: center;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 8px;
-    }
-
-    .sprint-stat-value {
-      font-size: 20px;
+    .log-agent {
+      color: var(--violet);
       font-weight: 600;
-      font-family: var(--mono);
     }
 
-    .sprint-stat-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* ─── Schedule ────────────────────────────────────── */
+    /* ─── Schedules (Sidebar) ──────────────────────────── */
     .schedule-list {
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }
 
     .schedule-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.018);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.025);
+      transition: all 0.2s;
     }
 
-    .schedule-info {
-      flex: 1;
+    .schedule-item:hover {
+      background: rgba(124, 58, 237, 0.03);
     }
+
+    .schedule-info { flex: 1; min-width: 0; }
 
     .schedule-name {
-      font-size: 13px;
-      font-weight: 500;
+      font-family: var(--heading);
+      font-size: 12px;
+      font-weight: 600;
     }
 
     .schedule-time {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
       font-family: var(--mono);
     }
 
     .btn-run {
-      padding: 5px 14px;
-      border: 1px solid var(--card-border);
+      padding: 5px 12px;
+      border: 1px solid rgba(124, 58, 237, 0.2);
       border-radius: 6px;
-      background: transparent;
-      color: var(--accent);
-      font-size: 11px;
-      font-family: var(--font);
-      font-weight: 500;
+      background: rgba(124, 58, 237, 0.06);
+      color: var(--violet);
+      font-size: 10px;
+      font-family: var(--heading);
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
     }
 
     .btn-run:hover {
-      background: var(--accent-glow);
-      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(167, 139, 250, 0.15));
+      border-color: var(--violet);
+      box-shadow: 0 0 16px rgba(124, 58, 237, 0.15);
     }
 
     .btn-run:disabled {
       opacity: 0.4;
       cursor: not-allowed;
+      box-shadow: none;
     }
 
-    /* ─── Clients ─────────────────────────────────────── */
-    .client-card {
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.02);
+    /* ─── Sprint Card (Sidebar) ────────────────────────── */
+    .progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet), var(--green));
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 8px rgba(124, 58, 237, 0.2);
+    }
+
+    .sprint-pct {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      margin-bottom: 10px;
+    }
+
+    .sprint-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .sprint-stat {
+      text-align: center;
+      padding: 10px 6px;
+      background: rgba(255, 255, 255, 0.018);
       border-radius: 8px;
+    }
+
+    .sprint-stat-value {
+      font-family: var(--heading);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .sprint-stat-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* ─── Clients Card (Sidebar) ───────────────────────── */
+    .client-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .client-card {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.018);
+      border-radius: 10px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.025);
     }
 
     .client-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), var(--purple));
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--violet), #A78BFA);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: var(--heading);
       font-weight: 700;
-      font-size: 16px;
+      font-size: 13px;
       color: #fff;
       flex-shrink: 0;
     }
 
     .client-name {
-      font-weight: 500;
-      font-size: 14px;
+      font-family: var(--heading);
+      font-weight: 600;
+      font-size: 12px;
     }
 
     .client-meta {
-      font-size: 12px;
+      font-size: 10px;
       color: var(--text-muted);
     }
 
-    /* ─── Section Titles ──────────────────────────────── */
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      letter-spacing: -0.3px;
-    }
-
-    /* ─── Responsive ──────────────────────────────────── */
-    @media (max-width: 1200px) {
-      .grid { grid-template-columns: repeat(2, 1fr); }
-      .grid-3 { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 768px) {
-      .main { padding: 16px; }
-      .grid { grid-template-columns: 1fr; }
-      .grid-2 { grid-template-columns: 1fr; }
-      .header { padding: 16px; }
-      .agent-row { grid-template-columns: 8px 1fr 80px; }
-      .agent-rank, .agent-tasks, .agent-rate { display: none; }
-    }
-
-    /* ─── Loading ─────────────────────────────────────── */
+    /* ─── Loading State ─────────────────────────────────── */
     .loading {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px;
+      padding: 30px;
       color: var(--text-muted);
+      font-size: 12px;
     }
 
     .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--card-border);
-      border-top-color: var(--accent);
+      width: 16px; height: 16px;
+      border: 2px solid rgba(124, 58, 237, 0.15);
+      border-top-color: var(--violet);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin-right: 10px;
+      margin-right: 8px;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    /* ─── Toast ───────────────────────────────────────── */
+    /* ─── Toast ─────────────────────────────────────────── */
     .toast {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 12px 20px;
-      background: var(--card);
+      bottom: 28px;
+      right: 28px;
+      padding: 14px 24px;
+      background: rgba(15, 22, 35, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 13px;
+      font-weight: 500;
       color: var(--text);
       opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.3s;
+      transform: translateY(12px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1000;
       pointer-events: none;
     }
 
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: var(--green); box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+    .toast.error { border-color: var(--rose); box-shadow: 0 0 20px rgba(244, 63, 94, 0.1); }
+
+    /* ─── Footer ────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-family: var(--mono);
+      border-top: 1px solid rgba(124, 58, 237, 0.05);
+      margin-top: 20px;
+      position: relative;
+      z-index: 1;
     }
 
-    .toast.success { border-color: var(--green); }
-    .toast.error { border-color: var(--red); }
+    .footer span {
+      color: var(--violet-dim);
+    }
+
+    /* ─── Responsive ────────────────────────────────────── */
+    @media (max-width: 1280px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        max-height: none;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .ceo-brief { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 768px) {
+      .main { padding: 20px 16px; }
+      .header { padding: 14px 16px; }
+      .hero { min-height: 80vh; padding: 40px 20px; }
+      .hero-wordmark { letter-spacing: -2px; }
+      .floor-inner { grid-template-columns: 1fr; }
+      .floor-label {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .floor-label::before {
+        width: 100%; height: 3px;
+        top: 0; left: 0;
+      }
+      .floor-number { margin-bottom: 0; }
+      .floor-desks { padding: 16px; }
+      .ground-floor { grid-template-columns: 1fr 1fr; }
+      .sidebar { grid-template-columns: 1fr; }
+      .ceo-brief { grid-column: auto; }
+    }
+
+    @media (max-width: 480px) {
+      .header-tagline { display: none; }
+      .uptime { display: none; }
+      .hero-scroll { display: none; }
+      .ground-floor { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
+  <!-- Top Gradient Bar -->
+  <div class="top-gradient-bar"></div>
+
+  <!-- Subtle Overlays -->
+  <div class="scanline-overlay"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Background Grid -->
+  <div class="bg-grid"></div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1 class="hero-wordmark"><span>Open Agency</span></h1>
+    <p class="hero-subtitle">Intelligence at work.</p>
+    <div class="hero-ticker">
+      <div class="pulse-dot"></div>
+      <span class="ticker-text"><span class="ticker-count" id="hero-agent-count">--</span> agents online</span>
+    </div>
+    <div class="hero-scroll">Scroll</div>
+  </section>
+
   <!-- Header -->
   <header class="header">
     <div class="header-left">
-      <div class="logo">OC</div>
-      <div class="header-title">Open <span>Claw</span> Agency</div>
+      <div class="logo">OA</div>
+      <div class="header-brand">
+        <div class="header-title">Open Agency</div>
+        <div class="header-tagline">Intelligence at work</div>
+      </div>
     </div>
     <div class="header-right">
       <span class="uptime" id="uptime">--</span>
@@ -549,158 +1520,220 @@
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main Content: Building + Sidebar -->
   <main class="main">
 
-    <!-- Stat Cards -->
-    <div class="grid" id="stat-cards">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Agents Online</span>
-        </div>
-        <div class="stat-value stat-accent" id="stat-agents">--</div>
-        <div class="stat-label">Registered & active</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Pipeline</span>
-        </div>
-        <div class="stat-value stat-green" id="stat-pipeline">--</div>
-        <div class="stat-label">Active deals</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Revenue</span>
-        </div>
-        <div class="stat-value stat-purple" id="stat-revenue">--</div>
-        <div class="stat-label">Total closed</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Boot Count</span>
-        </div>
-        <div class="stat-value stat-amber" id="stat-boots">--</div>
-        <div class="stat-label">System restarts</div>
-      </div>
-    </div>
+    <!-- Building Column -->
+    <div class="building-column">
+      <div class="building">
 
-    <!-- Agents + Pipeline -->
-    <div class="grid-3">
-      <!-- Agent List -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Agent Roster</span>
-          <span class="agent-tasks" id="agent-count">-- agents</span>
-        </div>
-        <div class="agent-grid" id="agent-list">
-          <div class="loading"><div class="spinner"></div> Loading agents...</div>
-        </div>
-      </div>
-
-      <!-- Pipeline & Finance -->
-      <div>
-        <!-- Pipeline Card -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="card-header">
-            <span class="card-title">Sales Pipeline</span>
+        <!-- ROOFTOP -->
+        <div class="rooftop">
+          <div class="rooftop-particles" id="rooftop-particles"></div>
+          <div class="rooftop-logo"><span>Open Agency</span></div>
+          <div class="rooftop-tagline">Intelligence at work.</div>
+          <div class="rooftop-status" id="rooftop-status">
+            <div class="dot"></div>
+            <span>All Systems Operational</span>
           </div>
-          <div class="pipeline-bars" id="pipeline-chart">
-            <div class="pipeline-bar">
-              <div class="pipeline-bar-count stat-red" id="pipe-hot">0</div>
-              <div class="pipeline-bar-fill" style="height: 4px; background: var(--red);" id="bar-hot"></div>
-              <div class="pipeline-bar-label">Hot</div>
+        </div>
+
+        <!-- FLOOR 4 — CREATIVE -->
+        <div class="floor floor-creative" id="floor-creative">
+          <div class="floor-inner">
+            <div class="floor-label">
+              <div class="floor-icon">🎨</div>
+              <div class="floor-number">Floor 4</div>
+              <div class="floor-name">Creative</div>
             </div>
-            <div class="pipeline-bar">
-              <div class="pipeline-bar-count stat-amber" id="pipe-warm">0</div>
-              <div class="pipeline-bar-fill" style="height: 4px; background: var(--amber);" id="bar-warm"></div>
-              <div class="pipeline-bar-label">Warm</div>
-            </div>
-            <div class="pipeline-bar">
-              <div class="pipeline-bar-count stat-accent" id="pipe-cold">0</div>
-              <div class="pipeline-bar-fill" style="height: 4px; background: var(--accent);" id="bar-cold"></div>
-              <div class="pipeline-bar-label">Cold</div>
-            </div>
-            <div class="pipeline-bar">
-              <div class="pipeline-bar-count stat-green" id="pipe-won">0</div>
-              <div class="pipeline-bar-fill" style="height: 4px; background: var(--green);" id="bar-won"></div>
-              <div class="pipeline-bar-label">Won</div>
+            <div class="floor-desks" id="desks-creative">
+              <div class="window-glow"></div>
+              <div class="loading"><div class="spinner"></div></div>
             </div>
           </div>
         </div>
 
-        <!-- Finance Card -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="card-header">
-            <span class="card-title">Finances</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <div style="font-size: 12px; color: var(--text-muted);">Revenue</div>
-              <div style="font-size: 18px; font-weight: 600; color: var(--green); font-family: var(--mono);" id="fin-revenue">$0</div>
+        <!-- FLOOR 3 — SALES -->
+        <div class="floor floor-sales" id="floor-sales">
+          <div class="floor-inner">
+            <div class="floor-label">
+              <div class="floor-icon">💼</div>
+              <div class="floor-number">Floor 3</div>
+              <div class="floor-name">Sales</div>
             </div>
-            <div>
-              <div style="font-size: 12px; color: var(--text-muted);">Expenses</div>
-              <div style="font-size: 18px; font-weight: 600; color: var(--red); font-family: var(--mono);" id="fin-expenses">$0</div>
-            </div>
-            <div>
-              <div style="font-size: 12px; color: var(--text-muted);">Profit</div>
-              <div style="font-size: 18px; font-weight: 600; font-family: var(--mono);" id="fin-profit">$0</div>
-            </div>
-            <div>
-              <div style="font-size: 12px; color: var(--text-muted);">Cash Position</div>
-              <div style="font-size: 18px; font-weight: 600; font-family: var(--mono);" id="fin-cash">$0</div>
+            <div class="floor-desks" id="desks-sales">
+              <div class="window-glow"></div>
+              <div class="loading"><div class="spinner"></div></div>
             </div>
           </div>
         </div>
 
-        <!-- Clients Card -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Clients</span>
+        <!-- FLOOR 2 — DEV TEAM -->
+        <div class="floor floor-dev" id="floor-dev">
+          <div class="floor-inner">
+            <div class="floor-label">
+              <div class="floor-icon">🚀</div>
+              <div class="floor-number">Floor 2</div>
+              <div class="floor-name">Dev Team</div>
+            </div>
+            <div class="floor-desks" id="desks-dev">
+              <div class="window-glow"></div>
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
           </div>
-          <div id="client-list">
-            <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+
+        <!-- FLOOR 1 — C-SUITE -->
+        <div class="floor floor-csuite" id="floor-csuite">
+          <div class="floor-inner">
+            <div class="floor-label">
+              <div class="floor-icon">👑</div>
+              <div class="floor-number">Floor 1</div>
+              <div class="floor-name">C-Suite</div>
+            </div>
+            <div class="floor-desks" id="desks-csuite">
+              <div class="window-glow"></div>
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GROUND FLOOR — STATS -->
+        <div class="ground-floor" id="stat-cards">
+          <div class="ground-stat">
+            <div class="ground-stat-icon color-violet">&#9679;</div>
+            <div class="ground-stat-value color-violet" id="stat-agents">--</div>
+            <div class="ground-stat-label">Agents Online</div>
+          </div>
+          <div class="ground-stat">
+            <div class="ground-stat-icon color-green">&#9670;</div>
+            <div class="ground-stat-value color-green" id="stat-pipeline">--</div>
+            <div class="ground-stat-label">Pipeline</div>
+          </div>
+          <div class="ground-stat">
+            <div class="ground-stat-icon color-purple">&#163;</div>
+            <div class="ground-stat-value color-purple" id="stat-revenue">--</div>
+            <div class="ground-stat-label">Revenue</div>
+          </div>
+          <div class="ground-stat">
+            <div class="ground-stat-icon color-amber">&#9889;</div>
+            <div class="ground-stat-value color-amber" id="stat-boots">--</div>
+            <div class="ground-stat-label">Boot Count</div>
+          </div>
+        </div>
+
+      </div><!-- /.building -->
+    </div><!-- /.building-column -->
+
+    <!-- Right Sidebar -->
+    <div class="sidebar">
+
+      <!-- CEO Brief -->
+      <div class="ceo-brief" id="ceo-brief">
+        <div class="ceo-brief-header">
+          <div class="ceo-brief-avatar">N</div>
+          <div class="ceo-brief-label">CEO Briefing</div>
+        </div>
+        <div class="ceo-brief-text empty" id="ceo-brief-text">Awaiting briefing...</div>
+        <div class="ceo-brief-time" id="ceo-brief-time"></div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">
+          <span>Activity Log</span>
+          <span class="sidebar-card-badge" id="log-count">--</span>
+        </div>
+        <div class="activity-ticker" id="log-list">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Sales Pipeline</div>
+        <div class="pipeline-list" id="pipeline-chart">
+          <div class="pipeline-row">
+            <div class="pipeline-label">Hot</div>
+            <div class="pipeline-bar-track"><div class="pipeline-bar-fill rose" id="bar-hot" style="width: 0%"></div></div>
+            <div class="pipeline-count color-rose" id="pipe-hot">0</div>
+          </div>
+          <div class="pipeline-row">
+            <div class="pipeline-label">Warm</div>
+            <div class="pipeline-bar-track"><div class="pipeline-bar-fill amber" id="bar-warm" style="width: 0%"></div></div>
+            <div class="pipeline-count color-amber" id="pipe-warm">0</div>
+          </div>
+          <div class="pipeline-row">
+            <div class="pipeline-label">Cold</div>
+            <div class="pipeline-bar-track"><div class="pipeline-bar-fill violet" id="bar-cold" style="width: 0%"></div></div>
+            <div class="pipeline-count color-violet" id="pipe-cold">0</div>
+          </div>
+          <div class="pipeline-row">
+            <div class="pipeline-label">Won</div>
+            <div class="pipeline-bar-track"><div class="pipeline-bar-fill green" id="bar-won" style="width: 0%"></div></div>
+            <div class="pipeline-count color-green" id="pipe-won">0</div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Sprint + Schedules -->
-    <div class="grid-2">
-      <!-- Sprint Card -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Active Sprint</span>
-          <span class="agent-tasks" id="sprint-name">--</span>
+      <!-- Financials -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Financials</div>
+        <div class="finance-grid">
+          <div class="finance-item">
+            <div class="finance-label">Revenue</div>
+            <div class="finance-value color-green" id="fin-revenue">&pound;0</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Expenses</div>
+            <div class="finance-value color-rose" id="fin-expenses">&pound;0</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Profit</div>
+            <div class="finance-value" id="fin-profit">&pound;0</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Cash</div>
+            <div class="finance-value" id="fin-cash">&pound;0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">
+          <span>Active Sprint</span>
+          <span class="sidebar-card-badge" id="sprint-name">--</span>
         </div>
         <div id="sprint-content">
-          <div style="color: var(--text-muted); font-size: 13px;">No active sprint</div>
+          <div style="color: var(--text-muted); font-size: 12px;">No active sprint</div>
         </div>
       </div>
 
-      <!-- Schedules Card -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Scheduled Tasks</span>
-        </div>
+      <!-- Schedules -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Scheduled Tasks</div>
         <div class="schedule-list" id="schedule-list">
           <div class="loading"><div class="spinner"></div> Loading...</div>
         </div>
       </div>
-    </div>
 
-    <!-- Logs -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Agent Activity Log</span>
-        <span class="agent-tasks" id="log-count">-- entries</span>
+      <!-- Clients -->
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Clients</div>
+        <div class="client-list" id="client-list">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
       </div>
-      <div class="log-list" id="log-list">
-        <div class="loading"><div class="spinner"></div> Loading logs...</div>
-      </div>
-    </div>
+
+    </div><!-- /.sidebar -->
 
   </main>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>Open Agency</span> &mdash; Intelligence at work. &middot; All systems monitored 24/7
+  </div>
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
@@ -708,6 +1741,283 @@
   <script>
     const API = '';
     let refreshTimer = null;
+    let hasAnimated = false;
+
+    // ─── Personality-Driven Bubble Messages ──────────────
+    const AGENT_MESSAGES = {
+      'cfo': [
+        'Reviewing Q1 projections...', 'Cash flow looking healthy 📊', 'Running expense analysis...',
+        'Profit margins on track ✅', 'Flagging an invoice for review...', 'Budget variance within 2%',
+        'Preparing financial summary...', 'Reconciling accounts 🔢'
+      ],
+      'cto': [
+        'Infrastructure running clean ✅', 'Reviewing security protocols...', 'Tech debt log updated 🔧',
+        'API response times nominal...', 'Deploying latest build...', 'Monitoring uptime metrics...',
+        'Scaling architecture review...', 'SSL certs all current 🔐'
+      ],
+      'cmo': [
+        'Planning content calendar 📅', 'Analysing campaign metrics...', 'Brand guidelines updated ✨',
+        'Social strategy in review...', 'Competitor analysis running...', 'Engagement up 12% this week',
+        'Reviewing SEO performance...', 'Marketing funnel optimised 📈'
+      ],
+      'dev-lead': [
+        'Sprint velocity looking good 🚀', 'Code review queue: 2 pending', 'Assigning tasks to the team...',
+        'Standup notes compiled 📋', 'Backlog grooming in progress...', 'Merging feature branches...',
+        'Sprint retro scheduled ✅', 'Unblocking the frontend team...'
+      ],
+      'creative-director': [
+        'Reviewing brand assets 🎨', 'Creative brief approved ✅', 'Quality check on designs...',
+        'Briefing Iris on new project...', 'Campaign concept approved 🖼️', 'Mood board in progress...',
+        'Art direction finalised ✨', 'Client presentation ready...'
+      ],
+      'designer': [
+        'Iterating on homepage layout...', 'Colour palette locked 🎨', 'Exporting assets for dev...',
+        'Wireframes approved ✅', 'Design system updated...', 'Responsive mockups in Figma...',
+        'Typography choices refined ✍️', 'Icon set refreshed...'
+      ],
+      'video-editor': [
+        'Rendering hero video... 🎬', 'Colour grading pass 2...', 'Audio sync complete ✅',
+        'Adding motion graphics...', 'Final cut under review...', 'Trimming B-roll footage...',
+        'Exporting for social 📱', 'Transitions looking clean...'
+      ],
+      'social-media': [
+        'Scheduling next week posts 📅', 'Engagement rate up 8%!', 'Replying to comments...',
+        'Hashtag strategy updated ✅', 'Story content drafted...', 'Analytics report compiled 📊',
+        'Trending topics scanned...', 'Community management on 💬'
+      ],
+      'copywriter': [
+        'Drafting landing page copy ✍️', 'Headlines A/B tested...', 'Email sequence written ✅',
+        'Blog post in review...', 'CTA copy optimised...', 'Brand voice guide followed 📝',
+        'Proofreading final draft...', 'Microcopy for onboarding done...'
+      ],
+      'sales-lead': [
+        'Pipeline review at 3pm 📊', 'New lead scored: 85/100', 'CRM updated with notes...',
+        'Team targets on track ✅', 'Coaching session with closer...', 'Forecasting Q2 numbers...',
+        'Deal flow looking strong 💰', 'Qualifying a warm referral...'
+      ],
+      'closer': [
+        'Closing call in 15 mins 📞', 'Contract sent for signature...', 'Deal closed! 🎉',
+        'Negotiating terms...', 'Following up on proposal...', 'Objection handling prep...',
+        'Demo scheduled for Friday ✅', 'Upsell opportunity spotted...'
+      ],
+      'lead-qualifier': [
+        'Scoring inbound leads... 🔍', '3 leads qualified today', 'Budget confirmed on prospect...',
+        'Lead enrichment running...', 'ICP match: 92% ✅', 'Routing hot lead to closer...',
+        'Discovery call notes added...', 'Disqualified 2 low-fit leads...'
+      ],
+      'follow-up': [
+        'Nurture sequence: day 3 📧', 'Re-engagement email sent...', 'Warm lead re-activated ✅',
+        'Follow-up call scheduled...', 'Checking in with prospects...', 'Drip campaign performing well...',
+        'Personalised outreach sent 💌', 'Response rate tracking...'
+      ],
+      'proposal': [
+        'Drafting proposal for Acme... 📄', 'Pricing model updated', 'Case study attached ✅',
+        'Proposal template refined...', 'Scope document finalised...', 'ROI projections calculated...',
+        'Custom deck built 📊', 'Terms and conditions reviewed...'
+      ],
+      'architect': [
+        'System diagram updated 🏗️', 'Microservices topology clean', 'Database schema reviewed ✅',
+        'Evaluating cache strategy...', 'API contracts defined...', 'Load testing thresholds set...',
+        'Infrastructure as code ready...', 'Scaling plan documented 📐'
+      ],
+      'frontend': [
+        'Component library updated 🎨', 'Responsive layout tested', 'Accessibility audit: pass ✅',
+        'Animation performance tuned...', 'Dark mode polished...', 'Bundle size reduced 12%...',
+        'Storybook stories added...', 'Cross-browser testing done 🌐'
+      ],
+      'backend': [
+        'API endpoint deployed 🚀', 'Database migrations done', 'Rate limiting configured ✅',
+        'Caching layer optimised...', 'WebSocket handler tested...', 'Error handling improved...',
+        'Auth middleware updated 🔐', 'Query performance tuned...'
+      ],
+      'fullstack': [
+        'Feature branch merged 🔀', 'End-to-end flow working', 'Integration tests green ✅',
+        'Full-stack ticket complete...', 'Docker config updated...', 'Environment vars synced...',
+        'Deployment pipeline clear 🚀', 'Code coverage at 87%...'
+      ],
+      'qa': [
+        'Test suite: all green ✅', 'Regression tests passing', 'Edge case found and logged 🐛',
+        'Performance benchmarks run...', 'Smoke tests automated...', 'Bug severity assessed...',
+        'Test coverage report ready 📋', 'UAT sign-off pending...'
+      ],
+      'code-review': [
+        'Reviewing PR #42... 👀', 'Code quality: excellent', 'Suggested refactor on utils ✅',
+        'No security issues found 🔐', 'Approving merge request...', 'Linting rules enforced...',
+        'Architecture feedback given 📝', 'PR approved and merged...'
+      ],
+    };
+
+    // Track which message index each agent is on
+    const agentMsgIndex = {};
+
+    // ─── Agent floor & bubble configuration ────────────────
+    const FLOOR_CONFIG = {
+      'creative-director': { floor: 'creative', name: 'Nova', role: 'Creative Director', rank: 'Director' },
+      'designer':          { floor: 'creative', name: 'Iris', role: 'Designer', rank: 'Senior' },
+      'video-editor':      { floor: 'creative', name: 'Finn', role: 'Video', rank: 'Specialist' },
+      'social-media':      { floor: 'creative', name: 'Jade', role: 'Social', rank: 'Specialist' },
+      'copywriter':        { floor: 'creative', name: 'Ash', role: 'Copy', rank: 'Senior' },
+      'sales-lead':        { floor: 'sales', name: 'Jordan', role: 'Sales Lead', rank: 'Lead' },
+      'closer':            { floor: 'sales', name: 'Closer', role: 'Closer', rank: 'Senior' },
+      'lead-qualifier':    { floor: 'sales', name: 'Qualifier', role: 'Lead Qual', rank: 'Specialist' },
+      'follow-up':         { floor: 'sales', name: 'Follow-Up', role: 'Follow-Up', rank: 'Specialist' },
+      'proposal':          { floor: 'sales', name: 'Proposal', role: 'Proposals', rank: 'Specialist' },
+      'dev-lead':          { floor: 'dev', name: 'Kai', role: 'Dev Lead', rank: 'Lead' },
+      'architect':         { floor: 'dev', name: 'Architect', role: 'Architect', rank: 'Senior' },
+      'frontend':          { floor: 'dev', name: 'Frontend', role: 'Frontend', rank: 'Engineer' },
+      'backend':           { floor: 'dev', name: 'Backend', role: 'Backend', rank: 'Engineer' },
+      'fullstack':         { floor: 'dev', name: 'Fullstack', role: 'Fullstack', rank: 'Engineer' },
+      'qa':                { floor: 'dev', name: 'QA', role: 'QA', rank: 'Engineer' },
+      'code-review':       { floor: 'dev', name: 'Reviewer', role: 'Code Review', rank: 'Senior' },
+      'cfo':               { floor: 'csuite', name: 'Marcus', role: 'CFO', rank: 'C-Suite' },
+      'cto':               { floor: 'csuite', name: 'Zara', role: 'CTO', rank: 'C-Suite' },
+      'cmo':               { floor: 'csuite', name: 'Priya', role: 'CMO', rank: 'C-Suite' },
+    };
+
+    const AVATAR_CLASS = { creative: 'creative', sales: 'sales', dev: 'dev', csuite: 'csuite' };
+
+    // Track bubble text per agent (overridden by real log data when available)
+    let agentBubbles = {};
+
+    // Track per-agent task stats from logs
+    const agentStats = {};
+
+    // Currently open popup agent
+    let activePopupAgent = null;
+
+    // ─── Bubble Cycling ──────────────────────────────────
+    function getNextBubble(agentId) {
+      const messages = AGENT_MESSAGES[agentId];
+      if (!messages || messages.length === 0) return 'Working...';
+      if (!(agentId in agentMsgIndex)) {
+        agentMsgIndex[agentId] = Math.floor(Math.random() * messages.length);
+      }
+      const msg = messages[agentMsgIndex[agentId]];
+      agentMsgIndex[agentId] = (agentMsgIndex[agentId] + 1) % messages.length;
+      return msg;
+    }
+
+    function cycleBubbles() {
+      const desks = document.querySelectorAll('.agent-desk[data-agent-id]');
+      desks.forEach(desk => {
+        const agentId = desk.dataset.agentId;
+        const bubble = desk.querySelector('.bubble');
+        if (!bubble) return;
+
+        // If real data override exists, use it sometimes (50/50)
+        if (agentBubbles[agentId] && Math.random() > 0.5) {
+          bubble.textContent = agentBubbles[agentId];
+        } else {
+          bubble.textContent = getNextBubble(agentId);
+        }
+      });
+    }
+
+    // Cycle bubbles every 5 seconds with stagger
+    setInterval(cycleBubbles, 5000);
+
+    // ─── Rooftop Particles ───────────────────────────────
+    function initParticles() {
+      const container = document.getElementById('rooftop-particles');
+      if (!container) return;
+
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = Math.random() * 30 + '%';
+        p.style.animationDuration = (4 + Math.random() * 6) + 's';
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        p.style.width = (1 + Math.random() * 2) + 'px';
+        p.style.height = p.style.width;
+        p.style.opacity = 0.3 + Math.random() * 0.5;
+        container.appendChild(p);
+      }
+    }
+
+    // ─── Agent Popup ─────────────────────────────────────
+    function showAgentPopup(agentId) {
+      // Dismiss existing popup
+      dismissPopup();
+
+      const config = FLOOR_CONFIG[agentId];
+      if (!config) return;
+
+      const desk = document.querySelector(`.agent-desk[data-agent-id="${agentId}"]`);
+      if (!desk) return;
+
+      activePopupAgent = agentId;
+
+      const stats = agentStats[agentId] || { tasks: 0, success: 100 };
+      const avatarClass = AVATAR_CLASS[config.floor] || 'default';
+      const initials = config.name.split(/[\s()]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+      const popup = document.createElement('div');
+      popup.className = 'agent-popup';
+      popup.id = 'active-popup';
+      popup.innerHTML = `
+        <div class="popup-header">
+          <div class="popup-avatar ${avatarClass}">${initials}</div>
+          <div>
+            <div class="popup-name">${esc(config.name)}</div>
+            <div class="popup-role">${esc(config.role)}</div>
+          </div>
+        </div>
+        <div class="popup-stats">
+          <div class="popup-stat">
+            <div class="popup-stat-value color-green">${stats.tasks}</div>
+            <div class="popup-stat-label">Tasks Done</div>
+          </div>
+          <div class="popup-stat">
+            <div class="popup-stat-value color-violet">${stats.success}%</div>
+            <div class="popup-stat-label">Success</div>
+          </div>
+        </div>
+        <div class="popup-rank">Rank: <span>${esc(config.rank)}</span></div>
+      `;
+
+      desk.style.position = 'relative';
+      desk.appendChild(popup);
+
+      // Trigger visible class next frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          popup.classList.add('visible');
+        });
+      });
+    }
+
+    function dismissPopup() {
+      const existing = document.getElementById('active-popup');
+      if (existing) {
+        existing.classList.remove('visible');
+        setTimeout(() => existing.remove(), 200);
+      }
+      activePopupAgent = null;
+    }
+
+    // Click handler for agent avatars
+    document.addEventListener('click', (e) => {
+      const avatar = e.target.closest('.desk-avatar');
+      if (avatar) {
+        const desk = avatar.closest('.agent-desk');
+        if (desk) {
+          const agentId = desk.dataset.agentId;
+          if (activePopupAgent === agentId) {
+            dismissPopup();
+          } else {
+            showAgentPopup(agentId);
+          }
+          e.stopPropagation();
+          return;
+        }
+      }
+
+      // Click away dismisses
+      if (activePopupAgent && !e.target.closest('.agent-popup')) {
+        dismissPopup();
+      }
+    });
 
     // ─── Fetch & Render ─────────────────────────────────
     async function fetchStatus() {
@@ -723,45 +2033,161 @@
 
     function renderAll(data) {
       renderStats(data);
-      renderAgents(data.agents);
+      renderBuilding(data.agents);
       renderPipeline(data.pipeline);
       renderFinances(data.finances);
       renderClients(data.clients);
       renderSprints(data.activeSprints);
       renderLogs(data.recentLogs);
       renderUptime(data.systemHealth);
+      renderCEOBrief(data.lastBriefing);
+      renderSchedules([]);
+      renderAgents(data.agents);
+    }
+
+    // ─── Animated Counter ────────────────────────────────
+    function animateCounter(el, target, prefix, isCurrency) {
+      if (typeof target !== 'number' || isNaN(target)) {
+        el.textContent = prefix + '0';
+        return;
+      }
+
+      const duration = 1200;
+      const startTime = performance.now();
+      const startVal = 0;
+
+      function update(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(startVal + (target - startVal) * eased);
+
+        if (isCurrency) {
+          el.textContent = formatCurrency(current);
+        } else {
+          el.textContent = prefix + current.toLocaleString();
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    // ─── CEO Briefing ────────────────────────────────────
+    function renderCEOBrief(text) {
+      const textEl = document.getElementById('ceo-brief-text');
+      const timeEl = document.getElementById('ceo-brief-time');
+
+      if (text) {
+        textEl.textContent = text;
+        textEl.classList.remove('empty');
+        timeEl.textContent = 'Latest briefing from Nikita';
+      } else {
+        textEl.textContent = 'Awaiting briefing...';
+        textEl.classList.add('empty');
+        timeEl.textContent = '';
+      }
     }
 
     // ─── Stats ──────────────────────────────────────────
     function renderStats(data) {
-      document.getElementById('stat-agents').textContent = data.agents?.length || 0;
-      document.getElementById('stat-pipeline').textContent = data.pipeline?.total || 0;
-      document.getElementById('stat-revenue').textContent = formatCurrency(data.finances?.revenue || 0);
-      document.getElementById('stat-boots').textContent = data.systemHealth?.bootCount || 0;
+      const agentCount = data.agents?.length || 0;
+      const pipelineCount = data.pipeline?.total || 0;
+      const revenue = data.finances?.revenue || 0;
+      const bootCount = data.systemHealth?.bootCount || 0;
+
+      document.getElementById('hero-agent-count').textContent = agentCount;
+
+      if (!hasAnimated) {
+        animateCounter(document.getElementById('stat-agents'), agentCount, '', false);
+        animateCounter(document.getElementById('stat-pipeline'), pipelineCount, '', false);
+        animateCounter(document.getElementById('stat-revenue'), revenue, '', true);
+        animateCounter(document.getElementById('stat-boots'), bootCount, '', false);
+        hasAnimated = true;
+      } else {
+        document.getElementById('stat-agents').textContent = agentCount;
+        document.getElementById('stat-pipeline').textContent = pipelineCount;
+        document.getElementById('stat-revenue').textContent = formatCurrency(revenue);
+        document.getElementById('stat-boots').textContent = bootCount;
+      }
     }
 
-    // ─── Agents ─────────────────────────────────────────
-    function renderAgents(agents) {
-      const container = document.getElementById('agent-list');
-      if (!agents || agents.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); padding: 12px;">No agents registered</div>';
-        return;
+    // ─── Building Renderer ───────────────────────────────
+    function renderBuilding(agents) {
+      const floors = { creative: [], sales: [], dev: [], csuite: [] };
+
+      // Build agent status map from live data
+      const statusMap = {};
+      if (agents) {
+        agents.forEach(a => {
+          statusMap[a.id] = a.status === 'ONLINE' || a.status === 'ACTIVE';
+          // Populate stats from API data when available
+          if (a.id && FLOOR_CONFIG[a.id]) {
+            if (!agentStats[a.id]) agentStats[a.id] = { tasks: 0, success: 100 };
+            if (a.tasksCompleted !== undefined) agentStats[a.id].tasks = a.tasksCompleted;
+            if (a.successRate !== undefined) agentStats[a.id].success = a.successRate;
+          }
+        });
       }
 
-      document.getElementById('agent-count').textContent = `${agents.length} agents`;
+      // Sort agents into floors using config
+      for (const [agentId, config] of Object.entries(FLOOR_CONFIG)) {
+        const isOnline = statusMap[agentId] || false;
+        // Use real bubble if available, otherwise get cycling personality message
+        const bubbleText = agentBubbles[agentId] || getNextBubble(agentId);
+        floors[config.floor].push({
+          id: agentId,
+          name: config.name,
+          role: config.role,
+          online: isOnline,
+          bubble: bubbleText,
+          avatarClass: AVATAR_CLASS[config.floor] || 'default',
+        });
+      }
 
-      container.innerHTML = agents.map(a => `
-        <div class="agent-row">
-          <div class="agent-dot ${a.status === 'ONLINE' || a.status === 'ACTIVE' ? 'online' : 'offline'}"></div>
-          <div>
-            <div class="agent-name">${esc(a.name)}</div>
-            <div class="agent-role">${esc(a.role)}</div>
-          </div>
-          <div class="agent-rank">${esc(a.rank || '--')}</div>
-          <div class="agent-tasks">${a.tasksCompleted || 0} tasks</div>
-          <div class="agent-rate" style="color: ${a.successRate >= 80 ? 'var(--green)' : a.successRate >= 50 ? 'var(--amber)' : 'var(--text-muted)'}">${a.successRate || 0}%</div>
-        </div>
-      `).join('');
+      // Render each floor
+      for (const [floorKey, floorAgents] of Object.entries(floors)) {
+        const container = document.getElementById(`desks-${floorKey}`);
+        if (!container) continue;
+
+        let html = '<div class="window-glow"></div>';
+
+        html += floorAgents.map(a => {
+          const initials = a.name.split(/[\s()]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+          const onlineClass = a.online ? 'online' : 'offline';
+
+          return `
+            <div class="agent-desk" data-agent-id="${esc(a.id)}">
+              <div class="bubble">${esc(a.bubble)}</div>
+              <div class="desk-avatar ${a.avatarClass} ${onlineClass}">
+                ${initials}
+                <div class="status-indicator ${onlineClass}"></div>
+              </div>
+              <div class="desk-name">${esc(a.name)}</div>
+              <div class="desk-role">${esc(a.role)}</div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = html;
+      }
+
+      // Update rooftop status
+      const onlineCount = agents ? agents.filter(a => a.status === 'ONLINE' || a.status === 'ACTIVE').length : 0;
+      const statusEl = document.getElementById('rooftop-status');
+      if (statusEl) {
+        statusEl.innerHTML = `<div class="dot"></div><span>${onlineCount} agents online &mdash; All Systems Operational</span>`;
+      }
+    }
+
+    // ─── Agents (kept for compatibility) ─────────────────
+    function renderAgents(agents) {
+      // Agent data is now rendered in the building.
+      // This function is kept for API compatibility.
+      const countEl = document.getElementById('agent-count');
+      if (countEl) countEl.textContent = `${agents?.length || 0} agents`;
     }
 
     // ─── Pipeline ───────────────────────────────────────
@@ -775,10 +2201,10 @@
       document.getElementById('pipe-cold').textContent = pipeline.cold || 0;
       document.getElementById('pipe-won').textContent = pipeline.wonThisMonth || 0;
 
-      document.getElementById('bar-hot').style.height = `${Math.max(((pipeline.hot || 0) / max) * 70, 4)}px`;
-      document.getElementById('bar-warm').style.height = `${Math.max(((pipeline.warm || 0) / max) * 70, 4)}px`;
-      document.getElementById('bar-cold').style.height = `${Math.max(((pipeline.cold || 0) / max) * 70, 4)}px`;
-      document.getElementById('bar-won').style.height = `${Math.max(((pipeline.wonThisMonth || 0) / max) * 70, 4)}px`;
+      document.getElementById('bar-hot').style.width = `${Math.max(((pipeline.hot || 0) / max) * 100, 2)}%`;
+      document.getElementById('bar-warm').style.width = `${Math.max(((pipeline.warm || 0) / max) * 100, 2)}%`;
+      document.getElementById('bar-cold').style.width = `${Math.max(((pipeline.cold || 0) / max) * 100, 2)}%`;
+      document.getElementById('bar-won').style.width = `${Math.max(((pipeline.wonThisMonth || 0) / max) * 100, 2)}%`;
     }
 
     // ─── Finances ───────────────────────────────────────
@@ -788,7 +2214,7 @@
       document.getElementById('fin-revenue').textContent = formatCurrency(fin.revenue);
       document.getElementById('fin-expenses').textContent = formatCurrency(fin.expenses);
       document.getElementById('fin-profit').textContent = formatCurrency(fin.profit);
-      document.getElementById('fin-profit').style.color = fin.profit >= 0 ? 'var(--green)' : 'var(--red)';
+      document.getElementById('fin-profit').style.color = fin.profit >= 0 ? 'var(--green)' : 'var(--rose)';
       document.getElementById('fin-cash').textContent = formatCurrency(fin.cashPosition);
     }
 
@@ -796,7 +2222,7 @@
     function renderClients(clients) {
       const container = document.getElementById('client-list');
       if (!clients || clients.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No clients registered</div>';
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">No clients yet</div>';
         return;
       }
 
@@ -818,7 +2244,7 @@
 
       if (!sprints || sprints.length === 0) {
         nameEl.textContent = '--';
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No active sprint</div>';
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">No active sprint</div>';
         return;
       }
 
@@ -832,18 +2258,18 @@
         <div class="progress-bar">
           <div class="progress-fill" style="width: ${pct}%"></div>
         </div>
-        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">${pct}% complete</div>
+        <div class="sprint-pct">${pct}% complete</div>
         <div class="sprint-stats">
           <div class="sprint-stat">
-            <div class="sprint-stat-value stat-accent">${s.tasksInProgress}</div>
+            <div class="sprint-stat-value color-violet">${s.tasksInProgress}</div>
             <div class="sprint-stat-label">In Progress</div>
           </div>
           <div class="sprint-stat">
-            <div class="sprint-stat-value stat-green">${s.tasksDone}</div>
+            <div class="sprint-stat-value color-green">${s.tasksDone}</div>
             <div class="sprint-stat-label">Done</div>
           </div>
           <div class="sprint-stat">
-            <div class="sprint-stat-value stat-red">${s.blockers}</div>
+            <div class="sprint-stat-value color-rose">${s.blockers}</div>
             <div class="sprint-stat-label">Blocked</div>
           </div>
         </div>
@@ -854,24 +2280,54 @@
     function renderLogs(logs) {
       const container = document.getElementById('log-list');
       if (!logs || logs.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); padding: 12px;">No logs yet</div>';
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 8px; font-size: 12px;">No logs yet</div>';
         return;
       }
 
-      document.getElementById('log-count').textContent = `${logs.length} entries`;
+      const countEl = document.getElementById('log-count');
+      if (countEl) countEl.textContent = `${logs.length} entries`;
 
-      // Reverse to show newest first
-      const reversed = [...logs].reverse();
+      // Map logs to agent bubbles for the building & track stats
+      const latestPerAgent = {};
+      const taskCountPerAgent = {};
+      logs.forEach(log => {
+        if (log.agentId && FLOOR_CONFIG[log.agentId]) {
+          if (!latestPerAgent[log.agentId]) {
+            latestPerAgent[log.agentId] = log.action || null;
+          }
+          // Count completed tasks
+          taskCountPerAgent[log.agentId] = (taskCountPerAgent[log.agentId] || 0) + 1;
+        }
+      });
+
+      // Update bubble text with REAL log data
+      for (const [agentId, text] of Object.entries(latestPerAgent)) {
+        if (text) agentBubbles[agentId] = text;
+      }
+
+      // Update agent stats from logs
+      for (const [agentId, count] of Object.entries(taskCountPerAgent)) {
+        if (!agentStats[agentId]) agentStats[agentId] = { tasks: 0, success: 100 };
+        agentStats[agentId].tasks = Math.max(agentStats[agentId].tasks, count);
+      }
+
+      // Update bubble DOM elements directly (without full re-render)
+      for (const [agentId, text] of Object.entries(agentBubbles)) {
+        const desk = document.querySelector(`.agent-desk[data-agent-id="${agentId}"] .bubble`);
+        if (desk) desk.textContent = text;
+      }
+
+      // Render log entries in sidebar (newest first, last 10)
+      const reversed = [...logs].reverse().slice(0, 10);
 
       container.innerHTML = reversed.map(log => {
         const time = new Date(log.timestamp);
-        const timeStr = time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const timeStr = time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
         return `
           <div class="log-entry">
             <span class="log-time">${timeStr}</span>
-            <span class="log-agent">${esc(log.agentId)}</span>
-            <span class="log-action">${esc(log.action)}${log.details && Object.keys(log.details).length ? ' <span style="color: var(--text-muted);">' + esc(summarizeDetails(log.details)) + '</span>' : ''}</span>
+            <span class="log-text"><span class="log-agent">${esc(log.agentId)}</span> ${esc(log.action)}</span>
           </div>
         `;
       }).join('');
@@ -898,7 +2354,7 @@
     function renderSchedules(schedules) {
       const container = document.getElementById('schedule-list');
       if (!schedules || schedules.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No schedules configured</div>';
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">No schedules configured</div>';
         return;
       }
 
@@ -919,7 +2375,7 @@
               <div class="schedule-name">${esc(s.name)}</div>
               <div class="schedule-time">${esc(s.agentId)} &middot; ${timeStr}</div>
             </div>
-            <button class="btn-run" onclick="runSchedule('${esc(s.key)}', this)">Run Now</button>
+            <button class="btn-run" onclick="runSchedule('${esc(s.key)}', this)">Run</button>
           </div>
         `;
       }).join('');
@@ -927,7 +2383,7 @@
 
     async function runSchedule(name, btn) {
       btn.disabled = true;
-      btn.textContent = 'Running...';
+      btn.textContent = '...';
 
       try {
         const res = await fetch(`${API}/api/schedules/${encodeURIComponent(name)}/run`, { method: 'POST' });
@@ -943,16 +2399,16 @@
       }
 
       btn.disabled = false;
-      btn.textContent = 'Run Now';
+      btn.textContent = 'Run';
       fetchStatus();
     }
 
     // ─── Helpers ────────────────────────────────────────
     function formatCurrency(n) {
-      if (n === 0) return '$0';
-      if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
-      if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
-      return `$${n.toLocaleString()}`;
+      if (n === 0) return '\u00A30';
+      if (n >= 1000000) return `\u00A3${(n / 1000000).toFixed(1)}M`;
+      if (n >= 1000) return `\u00A3${(n / 1000).toFixed(1)}K`;
+      return `\u00A3${n.toLocaleString()}`;
     }
 
     function esc(str) {
@@ -984,6 +2440,7 @@
 
     // ─── Init ───────────────────────────────────────────
     async function init() {
+      initParticles();
       await Promise.all([fetchStatus(), fetchSchedules()]);
       // Refresh every 10 seconds
       refreshTimer = setInterval(() => {

@@ -140,7 +140,7 @@ class SkillTeacher {
     if (!existsSync(claudeMdPath)) {
       const agentDir = join(AGENTS_DIR, agentId);
       mkdirSync(agentDir, { recursive: true });
-      writeFileSync(claudeMdPath, `# ${agentId} — OpenClaw Session Instructions\n\n`);
+      writeFileSync(claudeMdPath, `# ${agentId} — Open Agency Session Instructions\n\n`);
     }
 
     const existing = readFileSync(claudeMdPath, 'utf-8');

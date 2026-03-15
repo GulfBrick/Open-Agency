@@ -135,7 +135,7 @@ async function testFullWorkflow() {
 async function main() {
   console.log('');
   console.log('========================================');
-  console.log('  Open Claw Agency — Workflow Test');
+  console.log('  Open Agency — Workflow Test');
   console.log('========================================');
   console.log('');
 

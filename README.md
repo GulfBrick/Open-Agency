@@ -1,4 +1,4 @@
-# Open Claw Agency
+# Open Agency
 
 AI-powered business agency run by Nikita — an autonomous CEO agent that delegates to specialised department agents.
 
@@ -19,11 +19,11 @@ npm start
 ## Project Structure
 
 ```
-OpenClaw Agency/
+Open Agency/
 ├── agents/nikita/          Nikita's persona and config files
 │   ├── SOUL.md             Personality and values
 │   ├── IDENTITY.md         Role, authority, agent ID
-│   ├── CLAUDE.md           OpenClaw session instructions
+│   ├── CLAUDE.md           Open Agency session instructions
 │   └── TOOLS.md            Available tools and integrations
 ├── src/
 │   ├── core/

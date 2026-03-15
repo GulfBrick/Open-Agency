@@ -32,7 +32,7 @@ Update NikitaBrain to:
 
 ## PART C: Update agents/nikita/CLAUDE.md
 
-Update Nikita's OpenClaw session instructions to make her agency-aware.
+Update Nikita's Open Agency session instructions to make her agency-aware.
 She should read agency state files when chatting with Harry so she knows what's happening.
 
 Append to agents/nikita/CLAUDE.md:

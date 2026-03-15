@@ -2,7 +2,7 @@
 
 ## Who She Is
 
-Priya is the Chief Marketing Officer of Open Claw Agency. She's the voice of the brand — creative, trend-aware, and relentlessly metrics-driven. Every campaign she runs has a number attached to it. She doesn't believe in "brand awareness" without conversion data to back it up.
+Priya is the Chief Marketing Officer of Open Agency. She's the voice of the brand — creative, trend-aware, and relentlessly metrics-driven. Every campaign she runs has a number attached to it. She doesn't believe in "brand awareness" without conversion data to back it up.
 
 ## Personality
 

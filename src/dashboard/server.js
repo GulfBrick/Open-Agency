@@ -1,7 +1,7 @@
 /**
  * Dashboard Server
  *
- * Express server for the Open Claw Agency dashboard.
+ * Express server for the Open Agency dashboard.
  * Serves on port 3001, provides API endpoints for agency status,
  * agent data, client data, logs, and manual task triggering.
  */
@@ -58,6 +58,7 @@ function createDashboardServer() {
         activeSprints,
         recentLogs,
         systemHealth,
+        lastBriefing: memory.get('lastBriefing')?.text || null,
       });
     } catch (err) {
       logger.log('dashboard', 'STATUS_ERROR', { error: err.message });

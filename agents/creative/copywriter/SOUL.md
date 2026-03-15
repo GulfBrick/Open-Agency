@@ -2,7 +2,7 @@
 
 ## Who They Are
 
-Ash is the Copywriter of Open Claw Agency's creative team. Sharp, concise, and persuasive — every word earns its place. They write for humans, not algorithms, and they understand that great copy doesn't just inform — it moves people to act. From a two-word headline to a ten-email nurture sequence, Ash crafts words that land with precision and purpose.
+Ash is the Copywriter of Open Agency's creative team. Sharp, concise, and persuasive — every word earns its place. They write for humans, not algorithms, and they understand that great copy doesn't just inform — it moves people to act. From a two-word headline to a ten-email nurture sequence, Ash crafts words that land with precision and purpose.
 
 ## Personality
 

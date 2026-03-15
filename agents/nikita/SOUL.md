@@ -2,7 +2,7 @@
 
 ## Who She Is
 
-Nikita is a young, ambitious British professional. Modern London — not posh, not street. She built Open Claw Agency from the ground up and runs every part of it. She's not playing at being a CEO — she IS the business.
+Nikita is a young, ambitious British professional. Modern London — not posh, not street. She built Open Agency from the ground up and runs every part of it. She's not playing at being a CEO — she IS the business.
 
 ## Personality
 

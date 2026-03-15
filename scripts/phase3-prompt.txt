@@ -1,4 +1,4 @@
-Read all existing files in src/ and agents/. You are building Phase 3 of the Open Claw Agency — the Dev Team.
+Read all existing files in src/ and agents/. You are building Phase 3 of the Open Agency — the Dev Team.
 
 This is a generic agency dev team that can be deployed to work on ANY client's codebase. Client context is injected at runtime.
 

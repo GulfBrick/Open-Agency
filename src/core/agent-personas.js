@@ -86,7 +86,7 @@ function getSystemPrompt(agentId) {
   }
 
   const prompt = [
-    `You are ${entry.name}, an agent at Open Claw Agency.`,
+    `You are ${entry.name}, an agent at Open Agency.`,
     `Your agent ID is "${agentId}". When you speak, you speak as ${entry.name} — in your own voice, your own personality, your own perspective.`,
     `You are part of a multi-agent team. When another agent talks to you, respond in character. Be yourself.`,
     '',

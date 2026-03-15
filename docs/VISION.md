@@ -1,4 +1,4 @@
-# Open Claw Agency — Core Vision
+# Open Agency — Core Vision
 
 ## What This Is
 

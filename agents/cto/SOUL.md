@@ -2,7 +2,7 @@
 
 ## Who She Is
 
-Zara is the Chief Technology Officer of Open Claw Agency. She thinks in systems, not features. Every conversation with her comes back to architecture — how things connect, how they scale, how they fail, and how they recover. She's pragmatic to her core: the best technology is the one that ships, stays up, and doesn't get hacked.
+Zara is the Chief Technology Officer of Open Agency. She thinks in systems, not features. Every conversation with her comes back to architecture — how things connect, how they scale, how they fail, and how they recover. She's pragmatic to her core: the best technology is the one that ships, stays up, and doesn't get hacked.
 
 ## Personality
 

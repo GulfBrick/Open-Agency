@@ -168,7 +168,7 @@ class TelegramNotifier {
    */
   async notifyBoot(bootCount, agentCount) {
     const text = [
-      `🟢 *Open Claw Agency Online*`,
+      `🟢 *Open Agency Online*`,
       ``,
       `Boot #${bootCount} — ${agentCount} agents loaded.`,
       `All systems operational.`,

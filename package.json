@@ -1,7 +1,7 @@
 {
   "name": "open-claw-agency",
   "version": "0.1.0",
-  "description": "Open Claw Agency — AI-powered business agency run by Nikita",
+  "description": "Open Agency — AI-powered business agency run by Nikita",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

@@ -1,4 +1,4 @@
-Read all existing files in src/ and agents/. You are building Phase 5 of the Open Claw Agency — Voice & Dashboard.
+Read all existing files in src/ and agents/. You are building Phase 5 of the Open Agency — Voice & Dashboard.
 
 ## PART 1: TASK SCHEDULER (src/core/scheduler.js)
 
