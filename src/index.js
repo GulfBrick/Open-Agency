@@ -43,7 +43,8 @@ import { agentPersonas } from './core/agent-personas.js';
 import { agentConversation } from './core/agent-conversation.js';
 import { workflowEngine } from './core/workflow-engine.js';
 import { clientOnboarding } from './core/client-onboarding.js';
-import { telegramInbound } from './core/telegram-inbound.js';
+// telegramInbound disabled — OpenClaw handles Telegram polling; running a second poller causes 409 conflicts
+// import { telegramInbound } from './core/telegram-inbound.js';
 
 const AGENT_ID = 'nikita';
 
@@ -96,7 +97,7 @@ function printStartupSummary(bootCount, csuiteAgents = {}) {
   console.log(`  Content Calendar .... OK`);
   console.log(`  Scheduler ........... OK  (${scheduler.listSchedules().length} schedules)`);
   console.log(`  Telegram Out ........ ${telegramNotifier.enabled ? 'OK' : 'OFF'}  (${telegramNotifier.enabled ? 'connected' : 'no token'})`);
-  console.log(`  Telegram In ......... ${telegramInbound.enabled ? 'OK' : 'OFF'}  (${telegramInbound.enabled ? 'polling' : 'no token'})`);
+  console.log(`  Telegram In ......... OFF  (disabled)`);
   console.log(`  Dashboard ........... OK  (port 3001)`);
   console.log(`  Agent Registry ...... OK  (${agentRegistry.list().length} registered)`);
   console.log(`  Agent Personas ...... OK  (${agentPersonas.listAgentIds().length} personas)`);
@@ -270,9 +271,7 @@ async function boot() {
   console.log('  Waiting for messages...');
   console.log('');
 
-  // Start Telegram inbound — let Harry send commands to Nikita
-  telegramInbound.start();
-  logger.log('system', 'TELEGRAM_INBOUND_STARTED', { enabled: telegramInbound.enabled });
+  // telegramInbound disabled — OpenClaw handles Telegram polling; running a second poller causes 409 conflicts
 
   // Notify Harry on Telegram that the agency is online
   const totalAgents = agentRegistry.list().length;
@@ -318,7 +317,6 @@ export {
   agentConversation,
   workflowEngine,
   clientOnboarding,
-  telegramInbound,
 };
 
 // Boot
