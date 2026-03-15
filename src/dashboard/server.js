@@ -210,6 +210,51 @@ function createDashboardServer() {
   // ─── Client Onboarding Routes ────────────────────────────
   mountOnboardingRoutes(app);
 
+  // ─── API: Nikita Chat Message ──────────────────────────────
+
+  app.post('/api/nikita/message', async (req, res) => {
+    const { message } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    logger.log('nikita', 'DASHBOARD_CHAT_MESSAGE', { length: message.length });
+
+    try {
+      // Try to use nikitaBrain for a real AI response
+      const { nikitaBrain } = await import('../nikita/brain.js');
+
+      const busMessage = {
+        id: `dashboard-${Date.now()}`,
+        from: 'harry',
+        to: 'nikita',
+        type: 'TASK',
+        priority: 'HIGH',
+        payload: { text: message },
+        timestamp: new Date().toISOString(),
+      };
+
+      const decision = await nikitaBrain.processMessage(busMessage);
+      const reply = decision.response || 'Noted. I\'ll look into that.';
+
+      logger.log('nikita', 'DASHBOARD_CHAT_REPLY', { action: decision.action });
+      res.json({ reply });
+    } catch (err) {
+      // Fallback: return a formatted acknowledgement if brain isn't available
+      logger.log('nikita', 'DASHBOARD_CHAT_FALLBACK', { error: err.message });
+
+      const agentCount = agentRegistry.list().length;
+      const pendingTasks = taskQueue.getAll ? taskQueue.getAll('PENDING').length : 0;
+
+      const reply = `Got it — "${message.slice(0, 80)}${message.length > 80 ? '...' : ''}"\n\n` +
+        `Agency status: ${agentCount} agents registered, ${pendingTasks} tasks pending.\n` +
+        `I'll action this and keep you posted.`;
+
+      res.json({ reply });
+    }
+  });
+
   // ─── Data Assembly Helpers ─────────────────────────────────
 
   function _getAgentList() {
