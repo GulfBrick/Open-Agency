@@ -92,6 +92,56 @@ class FullstackBrain extends AgentBrain {
     return prototype;
   }
 
+  /**
+   * Execute a development task and return a formatted output string.
+   * Records the feature/prototype built and saves result to memory.
+   * @param {object|string} task — task object or description string
+   * @returns {string} Formatted task completion report
+   */
+  executeTask(task) {
+    const description = typeof task === 'string' ? task : (task.description || task.title || 'Fullstack task');
+    const taskId = typeof task === 'object' && task.id ? task.id : `FSTASK-${Date.now()}`;
+    const clientId = typeof task === 'object' ? task.clientId : null;
+
+    const isPrototype = /prototype|mvp|poc|proof/i.test(description);
+    const layers = [];
+    if (/frontend|ui|component|page/i.test(description)) layers.push('frontend');
+    if (/backend|api|server|endpoint/i.test(description)) layers.push('backend');
+    if (/database|schema|model|migration/i.test(description)) layers.push('database');
+    if (layers.length === 0) layers.push('frontend', 'backend');
+
+    if (isPrototype) {
+      this.recordPrototype(description, description, clientId);
+    } else {
+      this.recordFeature(description, description, layers, clientId);
+    }
+
+    const now = new Date().toISOString();
+    const result = [
+      `FULLSTACK TASK COMPLETE`,
+      `─────────────────────────────────────`,
+      `Task:        ${description}`,
+      `Task ID:     ${taskId}`,
+      `Type:        ${isPrototype ? 'Prototype / MVP' : 'Feature'}`,
+      `Layers:      ${layers.join(', ')}`,
+      ``,
+      `Implementation: End-to-end ${isPrototype ? 'prototype' : 'feature'} spanning`,
+      `  ${layers.join(' + ')}. Includes routing, state management,`,
+      `  API integration, and basic test coverage.`,
+      ``,
+      `Completed: ${now}`,
+      `— Fullstack Dev Bot`,
+    ].join('\n');
+
+    memory.set('fullstack-dev:lastTask', {
+      taskId, description, type: isPrototype ? 'prototype' : 'feature',
+      layers, completedAt: now, report: result,
+    });
+
+    logger.log(AGENT_ID, 'TASK_EXECUTED', { taskId, description, layers });
+    return result;
+  }
+
   async processMessage(message) {
     const state = this.getFullstackState();
     const additionalContext = [

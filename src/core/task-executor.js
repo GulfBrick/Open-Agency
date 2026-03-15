@@ -11,8 +11,35 @@ import { agentRegistry } from './agent-registry.js';
 import { messageBus, MESSAGE_TYPES, PRIORITY } from './message-bus.js';
 import { telegramNotifier } from './telegram-notifier.js';
 import { experience, OUTCOME } from './experience.js';
+import { memory } from './memory.js';
 
 const POLL_INTERVAL = 30_000; // 30 seconds
+
+/**
+ * Maps description patterns to specific agent methods.
+ * The task executor uses these to call the right domain method
+ * instead of falling back to generic processMessage.
+ */
+const DESCRIPTION_METHOD_MAP = [
+  // Sales team
+  { pattern: /qualify\s+lead/i, method: 'qualifyLeadFromTask', argBuilder: (task) => [{ description: task.description }] },
+  { pattern: /generate\s+proposal|create\s+proposal/i, method: 'createProposal', argBuilder: (task) => [task.clientId || 'unknown', { scope: task.description }] },
+  { pattern: /follow.?up\s+sequence|nurture\s+sequence/i, method: 'followUpSequence', argBuilder: (task) => [task.description.match(/\[(LEAD-[^\]]+)\]/)?.[1] || task.description] },
+  // Dev team
+  { pattern: /create\s+sprint|sprint\s+plan/i, method: 'createSprint', argBuilder: (task) => [task.clientId || 'unknown', [task.description]] },
+  { pattern: /assign\s+task/i, method: 'assignTask', argBuilder: (task) => [task.assignedTo, task.description] },
+  { pattern: /sprint\s+status|sprint\s+progress/i, method: 'getSprintStatus', argBuilder: (task) => [task.clientId || 'unknown'] },
+  // Dev worker bots
+  { pattern: /\[TASK-/i, method: 'executeTask', argBuilder: (task) => [task] },
+  // C-Suite reports
+  { pattern: /financial\s+health|financial\s+assessment/i, method: 'generateDailySnapshot', argBuilder: () => [] },
+  { pattern: /tech\s+stack\s+audit|infrastructure/i, method: 'generateDailyReport', argBuilder: () => [] },
+  { pattern: /brand.*assessment|market.*assessment|content\s+calendar/i, method: 'generateDailyReport', argBuilder: () => [] },
+  // Generic dev tasks
+  { pattern: /development\s+kickoff|plan\s+initial\s+sprint/i, method: 'createSprint', argBuilder: (task) => [task.clientId || task.description.match(/Client ID:\s*(\S+)/)?.[1] || 'unknown', [task.description]] },
+  { pattern: /sales\s+strategy|outreach\s+plan|pipeline/i, method: 'generateDailyReport', argBuilder: () => [] },
+  { pattern: /creative\s+kickoff|brand\s+guidelines/i, method: 'generateDailyReport', argBuilder: () => [] },
+];
 
 class TaskExecutor {
   constructor() {
@@ -79,23 +106,35 @@ class TaskExecutor {
       return;
     }
 
-    // Determine which method to call based on task type
-    const method = this._resolveMethod(agent, task.type);
-    if (!method) {
-      logger.log('task-executor', 'NO_METHOD', { agentId: task.assignedTo, taskType: task.type });
+    // Resolve the best method and arguments for this task
+    const resolved = this._resolveMethod(agent, task);
+    if (!resolved) {
+      logger.log('task-executor', 'NO_METHOD', { agentId: task.assignedTo, taskType: task.type, taskId: task.id });
       taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
       telegramNotifier.notifyTaskFailed(task, `No suitable method for task type '${task.type}'`);
       this._notifyNikita(task, TASK_STATUS.FAILED, null, `No method for type: ${task.type}`);
       return;
     }
 
+    const { method, args } = resolved;
+
     // Mark IN_PROGRESS
     taskQueue.updateStatus(task.id, TASK_STATUS.IN_PROGRESS);
     const startTime = Date.now();
 
     try {
-      const result = await agentRegistry.dispatch(task.assignedTo, method, [task]);
+      const result = await agentRegistry.dispatch(task.assignedTo, method, args);
       const duration = Date.now() - startTime;
+
+      // Save the result to memory so the dashboard can see it
+      memory.set(`task-result:${task.id}`, {
+        taskId: task.id,
+        agentId: task.assignedTo,
+        method,
+        result: typeof result === 'string' ? result : JSON.stringify(result),
+        completedAt: new Date().toISOString(),
+        duration,
+      });
 
       // Mark DONE
       taskQueue.updateStatus(task.id, TASK_STATUS.COMPLETED);
@@ -149,18 +188,53 @@ class TaskExecutor {
   }
 
   /**
-   * Resolve the best method to call on an agent for a given task type.
-   * Tries: processTask, handleTask, processMessage, execute — in that order.
+   * Resolve the best method to call on an agent for a given task.
+   *
+   * Resolution order:
+   *   1. Match task description against DESCRIPTION_METHOD_MAP patterns
+   *   2. Match task type as a direct method name (e.g. 'generateReport')
+   *   3. Try domain-specific methods: executeTask, processTask, handleTask
+   *   4. Fall back to processMessage
+   *
    * @private
+   * @param {object} agent — the agent instance
+   * @param {object} task — the full task object
+   * @returns {{ method: string, args: any[] }|null}
    */
-  _resolveMethod(agent, taskType) {
-    // Prefer a method matching the task type directly (e.g. 'generateReport')
-    if (taskType && typeof agent[taskType] === 'function') return taskType;
+  _resolveMethod(agent, task) {
+    const description = task.description || '';
 
-    // Fall back to common handler methods
-    const fallbacks = ['processTask', 'handleTask', 'processMessage', 'execute'];
-    for (const method of fallbacks) {
-      if (typeof agent[method] === 'function') return method;
+    // 1. Match description patterns to specific methods
+    for (const mapping of DESCRIPTION_METHOD_MAP) {
+      if (mapping.pattern.test(description) && typeof agent[mapping.method] === 'function') {
+        return { method: mapping.method, args: mapping.argBuilder(task) };
+      }
+    }
+
+    // 2. Match task type as a direct method name
+    if (task.type && typeof agent[task.type] === 'function') {
+      return { method: task.type, args: [task] };
+    }
+
+    // 3. Try domain-specific handler methods
+    const domainMethods = ['executeTask', 'processTask', 'handleTask'];
+    for (const method of domainMethods) {
+      if (typeof agent[method] === 'function') {
+        return { method, args: [task] };
+      }
+    }
+
+    // 4. Fall back to processMessage (wraps the task as a message)
+    if (typeof agent.processMessage === 'function') {
+      const message = {
+        id: task.id,
+        from: task.createdBy || 'task-executor',
+        to: task.assignedTo,
+        type: task.type,
+        priority: task.priority,
+        payload: { description: task.description, taskId: task.id },
+      };
+      return { method: 'processMessage', args: [message] };
     }
 
     return null;

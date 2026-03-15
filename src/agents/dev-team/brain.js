@@ -500,6 +500,149 @@ class DevLeadBrain extends AgentBrain {
     return bestBot;
   }
 
+  // ─── Task-Callable Methods ──────────────────────────────────
+
+  /**
+   * Create a sprint for a client with a set of tasks. Returns a formatted
+   * sprint plan saved to memory.
+   * @param {string} clientId
+   * @param {string[]|object[]} tasks — task descriptions or objects
+   * @returns {string} Formatted sprint plan
+   */
+  createSprint(clientId, tasks = []) {
+    const now = new Date();
+    const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const sprintName = `Sprint ${(this.getDevState().sprintHistory?.length || 0) + 1}`;
+
+    const sprint = this.startSprint(
+      sprintName,
+      clientId,
+      now.toISOString().slice(0, 10),
+      endDate.toISOString().slice(0, 10),
+      [`Deliver ${tasks.length} tasks for ${clientId}`],
+    );
+
+    const createdTasks = [];
+    for (const task of tasks) {
+      const title = typeof task === 'string' ? task : (task.title || task.description || 'Unnamed task');
+      const type = typeof task === 'object' && task.type ? task.type : 'fullstack';
+      const priority = typeof task === 'object' && task.priority ? task.priority : 'MEDIUM';
+
+      const created = this.addTask(title, title, type, priority);
+      createdTasks.push(created);
+    }
+
+    const result = [
+      `SPRINT PLAN: ${sprintName}`,
+      `─────────────────────────────────────`,
+      `Client:     ${clientId}`,
+      `Duration:   ${now.toISOString().slice(0, 10)} → ${endDate.toISOString().slice(0, 10)}`,
+      `Tasks:      ${createdTasks.length}`,
+      `Sprint ID:  ${sprint.id}`,
+      ``,
+      `TASK BREAKDOWN`,
+      ...createdTasks.map((t, i) => `  ${i + 1}. [${t.priority}] ${t.title} → ${t.assignedTo}`),
+      ``,
+      `STATUS: Sprint active. Tasks dispatched to agents.`,
+      `— Kai, Dev Lead`,
+    ].join('\n');
+
+    memory.set('dev-lead:lastSprint', {
+      sprintId: sprint.id, sprintName, clientId,
+      taskCount: createdTasks.length, generatedAt: now.toISOString(), report: result,
+    });
+
+    return result;
+  }
+
+  /**
+   * Assign a task to a specific agent. Creates and dispatches the task.
+   * @param {string} agentId — the bot to assign to
+   * @param {string|object} task — task description or object
+   * @returns {string} Formatted assignment confirmation
+   */
+  assignTask(agentId, task) {
+    const title = typeof task === 'string' ? task : (task.title || task.description || 'Unnamed task');
+    const type = typeof task === 'object' && task.type ? task.type : 'fullstack';
+    const priority = typeof task === 'object' && task.priority ? task.priority : 'MEDIUM';
+
+    const created = this.addTask(title, title, type, priority, agentId);
+
+    const result = [
+      `TASK ASSIGNED`,
+      `─────────────────────────────────────`,
+      `Task:       ${title}`,
+      `Task ID:    ${created.id}`,
+      `Assigned:   ${agentId}`,
+      `Type:       ${type}`,
+      `Priority:   ${priority}`,
+      `Status:     ${created.status}`,
+      ``,
+      `Task dispatched to ${agentId} via task queue.`,
+      `— Kai, Dev Lead`,
+    ].join('\n');
+
+    return result;
+  }
+
+  /**
+   * Get the current sprint status for a client. Returns formatted progress.
+   * @param {string} clientId
+   * @returns {string} Formatted sprint status
+   */
+  getSprintStatus(clientId) {
+    const progress = this.getSprintProgress();
+    const state = this.getDevState();
+
+    if (!progress) {
+      return `No active sprint${clientId ? ` for ${clientId}` : ''}. Use createSprint to start one.`;
+    }
+
+    const sprint = state.currentSprint;
+    const tasksByStatus = {};
+    for (const task of sprint.tasks) {
+      tasksByStatus[task.status] = tasksByStatus[task.status] || [];
+      tasksByStatus[task.status].push(task);
+    }
+
+    const lines = [
+      `SPRINT STATUS: ${progress.sprintName}`,
+      `─────────────────────────────────────`,
+      `Client:       ${progress.clientId}`,
+      `Duration:     ${progress.startDate} → ${progress.endDate}`,
+      `Progress:     ${progress.completionPercent}%`,
+      ``,
+      `TASK SUMMARY`,
+      `  Total:       ${progress.totalTasks}`,
+      `  Done:        ${progress.completed}`,
+      `  In Progress: ${progress.inProgress}`,
+      `  In Review:   ${progress.inReview}`,
+      `  In QA:       ${progress.inQA}`,
+      `  Todo:        ${progress.todo}`,
+      `  Blocked:     ${progress.blocked}`,
+      ``,
+    ];
+
+    for (const [status, tasks] of Object.entries(tasksByStatus)) {
+      if (tasks.length > 0) {
+        lines.push(`${status}:`);
+        for (const t of tasks) {
+          lines.push(`  • ${t.title} → ${t.assignedTo}`);
+        }
+      }
+    }
+
+    lines.push(``, `Velocity avg: ${state.velocity.average} tasks/sprint`, `— Kai, Dev Lead`);
+
+    const result = lines.join('\n');
+
+    memory.set('dev-lead:lastStatus', {
+      sprintId: progress.sprintId, progress, generatedAt: new Date().toISOString(),
+    });
+
+    return result;
+  }
+
   // ─── Reporting ──────────────────────────────────────────────
 
   /**

@@ -51,6 +51,13 @@ function createDashboardServer() {
       const recentLogs = logger.getRecentLogs(20);
       const systemHealth = _getSystemHealth();
 
+      // Last reports from C-suite for dashboard display
+      const lastReports = {
+        cfo: memory.get('cfo:lastSnapshot')?.generatedAt || null,
+        cto: memory.get('cto:lastReport')?.generatedAt || null,
+        cmo: memory.get('cmo:lastReport')?.generatedAt || null,
+      };
+
       res.json({
         agents,
         clients,
@@ -60,6 +67,7 @@ function createDashboardServer() {
         recentLogs,
         systemHealth,
         lastBriefing: memory.get('lastBriefing')?.text || null,
+        lastReports,
       });
     } catch (err) {
       logger.log('dashboard', 'STATUS_ERROR', { error: err.message });
@@ -141,6 +149,64 @@ function createDashboardServer() {
     }
   });
 
+  // ─── API: Last Agent Reports ─────────────────────────────
+  //
+  // Returns the most recent reports from C-suite and team leads,
+  // so the dashboard can show "Last report: [timestamp]" per agent.
+
+  app.get('/api/reports', (req, res) => {
+    try {
+      const cfoSnapshot = memory.get('cfo:lastSnapshot');
+      const ctoReport = memory.get('cto:lastReport');
+      const cmoReport = memory.get('cmo:lastReport');
+      const salesReport = memory.get('sales-lead:lastQualification');
+      const devReport = memory.get('dev-lead:lastSprint');
+
+      res.json({
+        cfo: cfoSnapshot ? {
+          type: 'Daily Financial Snapshot',
+          generatedAt: cfoSnapshot.generatedAt,
+          summary: {
+            revenue: cfoSnapshot.revenue,
+            expenses: cfoSnapshot.expenses,
+            profit: cfoSnapshot.profit,
+            cashPosition: cfoSnapshot.cashPosition,
+          },
+          report: cfoSnapshot.report,
+        } : null,
+        cto: ctoReport ? {
+          type: 'Daily Tech Status Report',
+          generatedAt: ctoReport.generatedAt,
+          summary: {
+            overallStatus: ctoReport.overallStatus,
+            health: ctoReport.health,
+            infraCost: ctoReport.infraCost,
+          },
+          report: ctoReport.report,
+        } : null,
+        cmo: cmoReport ? {
+          type: 'Daily Marketing Report',
+          generatedAt: cmoReport.generatedAt,
+          summary: {
+            performance: cmoReport.performance,
+            suggestion: cmoReport.suggestion,
+          },
+          report: cmoReport.report,
+        } : null,
+        salesLead: salesReport ? {
+          type: 'Last Lead Qualification',
+          generatedAt: salesReport.generatedAt,
+        } : null,
+        devLead: devReport ? {
+          type: 'Last Sprint Created',
+          generatedAt: devReport.generatedAt,
+        } : null,
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // ─── Client Onboarding Routes ────────────────────────────
   mountOnboardingRoutes(app);
 
@@ -150,12 +216,27 @@ function createDashboardServer() {
     const registeredIds = agentRegistry.list();
     const profiles = agentProfile.listAgents();
 
+    // Map agent IDs to their last report memory keys
+    const lastReportKeys = {
+      'cfo': 'cfo:lastSnapshot',
+      'cto': 'cto:lastReport',
+      'cmo': 'cmo:lastReport',
+      'sales-lead': 'sales-lead:lastQualification',
+      'dev-lead': 'dev-lead:lastSprint',
+      'frontend': 'frontend-dev:lastTask',
+      'backend': 'backend-dev:lastTask',
+      'fullstack': 'fullstack-dev:lastTask',
+    };
+
     // Build a combined list from both registry and profiles
     const agentMap = new Map();
 
     // Start with registered agents (runtime)
     for (const id of registeredIds) {
       const stats = experience.getStats(id);
+      const reportKey = lastReportKeys[id];
+      const lastReport = reportKey ? memory.get(reportKey) : null;
+
       agentMap.set(id, {
         id,
         name: _agentDisplayName(id),
@@ -164,6 +245,7 @@ function createDashboardServer() {
         tasksCompleted: stats.totalTasks,
         successRate: stats.successRate,
         rank: null,
+        lastReport: lastReport?.generatedAt || lastReport?.completedAt || null,
       });
     }
 
@@ -176,6 +258,9 @@ function createDashboardServer() {
         existing.role = profile.role;
       } else {
         const stats = experience.getStats(profile.agentId);
+        const reportKey = lastReportKeys[profile.agentId];
+        const lastReport = reportKey ? memory.get(reportKey) : null;
+
         agentMap.set(profile.agentId, {
           id: profile.agentId,
           name: profile.name,
@@ -184,6 +269,7 @@ function createDashboardServer() {
           tasksCompleted: stats.totalTasks,
           successRate: stats.successRate,
           rank: profile.rank,
+          lastReport: lastReport?.generatedAt || lastReport?.completedAt || null,
         });
       }
     }

@@ -627,6 +627,210 @@ class SalesLeadBrain extends AgentBrain {
     return this.getSalesState().teamWorkload;
   }
 
+  // ─── Task-Callable Methods ───────────────────────────────────
+
+  /**
+   * Qualify a lead from a task object. Scores the lead, updates the pipeline,
+   * and returns a formatted qualification report saved to memory.
+   * @param {{ prospectName?: string, contactEmail?: string, source?: string, description?: string, estimatedValue?: number, industry?: string, companySize?: string }} lead
+   * @returns {string} Formatted qualification result
+   */
+  qualifyLeadFromTask(lead) {
+    const created = this.addLead(
+      lead.prospectName || 'Unknown Prospect',
+      lead.contactEmail || 'unknown@example.com',
+      lead.source || 'INBOUND',
+      {
+        description: lead.description || '',
+        estimatedValue: lead.estimatedValue || 0,
+        industry: lead.industry || null,
+        companySize: lead.companySize || null,
+      },
+    );
+
+    const scores = {
+      companyFit: lead.companySize ? 70 : 40,
+      needFit: lead.description ? 65 : 35,
+      budgetSignal: lead.estimatedValue > 0 ? Math.min(90, 50 + Math.floor(lead.estimatedValue / 1000)) : 30,
+      timeline: 50,
+      decisionAuthority: lead.contactEmail ? 60 : 30,
+    };
+
+    const weightedScore = Math.round(
+      (scores.companyFit * 25 + scores.needFit * 25 + scores.budgetSignal * 20 +
+       scores.timeline * 15 + scores.decisionAuthority * 15) / 100,
+    );
+
+    const qualified = weightedScore >= 50;
+    const notes = `Auto-qualified via task pipeline. Weighted score: ${weightedScore}/100.`;
+    this.qualifyLead(created.id, weightedScore, qualified, notes);
+
+    const now = new Date().toISOString();
+    const result = [
+      `LEAD QUALIFICATION REPORT`,
+      `─────────────────────────────────────`,
+      `Prospect:     ${created.prospectName}`,
+      `Email:        ${created.contactEmail}`,
+      `Source:       ${created.source}`,
+      `Est. Value:   £${(created.estimatedValue || 0).toLocaleString()}`,
+      ``,
+      `SCORING BREAKDOWN`,
+      `  Company fit:        ${scores.companyFit}/100`,
+      `  Need fit:           ${scores.needFit}/100`,
+      `  Budget signal:      ${scores.budgetSignal}/100`,
+      `  Timeline:           ${scores.timeline}/100`,
+      `  Decision authority: ${scores.decisionAuthority}/100`,
+      ``,
+      `WEIGHTED SCORE: ${weightedScore}/100`,
+      `VERDICT:        ${qualified ? 'QUALIFIED — moving to discovery' : 'DISQUALIFIED — added to nurture'}`,
+      ``,
+      `Lead ID: ${created.id}`,
+      `Qualified at: ${now}`,
+      `— Jordan, Sales Lead`,
+    ].join('\n');
+
+    memory.set('sales-lead:lastQualification', {
+      leadId: created.id, prospectName: created.prospectName,
+      score: weightedScore, qualified, generatedAt: now, report: result,
+    });
+
+    return result;
+  }
+
+  /**
+   * Create a proposal for a client. Generates a formatted proposal document
+   * and saves to memory.
+   * @param {string} clientId
+   * @param {{ scope?: string, budget?: number, timeline?: string, deliverables?: string[], goals?: string[], companyName?: string }} brief
+   * @returns {string} Formatted proposal document
+   */
+  createProposal(clientId, brief = {}) {
+    const companyName = brief.companyName || clientId;
+    const scope = brief.scope || 'Full-service engagement';
+    const budget = brief.budget || 0;
+    const timeline = brief.timeline || 'To be agreed';
+    const deliverables = brief.deliverables || ['Discovery & strategy', 'Implementation', 'Review & optimisation'];
+    const goals = brief.goals || [];
+
+    const now = new Date();
+    const proposalId = `PROP-${Date.now()}`;
+
+    const lines = [
+      `═══════════════════════════════════════════════════`,
+      `  PROPOSAL: ${companyName.toUpperCase()}`,
+      `═══════════════════════════════════════════════════`,
+      ``,
+      `  Proposal ID:  ${proposalId}`,
+      `  Client:       ${companyName}`,
+      `  Prepared:     ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+      `  Valid Until:  ${new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+      ``,
+      `  SCOPE & DELIVERABLES`,
+      `  Scope: ${scope}`,
+      `  Deliverables:`,
+      ...deliverables.map(d => `    • ${d}`),
+      ``,
+    ];
+
+    if (goals.length > 0) {
+      lines.push(`  CLIENT GOALS`, ...goals.map(g => `    • ${g}`), ``);
+    }
+
+    lines.push(
+      `  INVESTMENT`,
+      `  Budget:    £${budget.toLocaleString()}`,
+      `  Timeline:  ${timeline}`,
+      `  Payment:   50% upfront, 50% on completion`,
+      ``,
+      `  NEXT STEPS`,
+      `  1. Review and approve this proposal`,
+      `  2. Kickoff meeting with your assigned team`,
+      `  3. Sprint 1 begins within 48 hours of approval`,
+      ``,
+      `═══════════════════════════════════════════════════`,
+      `  Open Agency — Let's build something brilliant.`,
+      `═══════════════════════════════════════════════════`,
+    );
+
+    const report = lines.join('\n');
+
+    memory.set(`sales-lead:proposal:${clientId}`, {
+      proposalId, clientId, companyName, scope, budget, timeline,
+      deliverables, generatedAt: now.toISOString(), report,
+    });
+    memory.set('sales-lead:lastProposal', {
+      proposalId, clientId, companyName, generatedAt: now.toISOString(),
+    });
+
+    logger.log(AGENT_ID, 'PROPOSAL_CREATED_FROM_TASK', { proposalId, clientId, budget });
+    return report;
+  }
+
+  /**
+   * Set up a follow-up sequence for a lead. Queues the follow-up bot
+   * and returns a formatted plan saved to memory.
+   * @param {string} leadId
+   * @returns {string} Formatted follow-up plan
+   */
+  followUpSequence(leadId) {
+    const state = this.getSalesState();
+    const lead = state.pipeline.find(l => l.id === leadId);
+    const prospectName = lead ? lead.prospectName : leadId;
+    const stage = lead ? lead.stage : 'UNKNOWN';
+    const value = lead ? lead.estimatedValue : 0;
+
+    let cadenceType = 'NEW_LEAD', totalTouches = 6, intervalDays = 3;
+    if (stage === 'QUALIFIED' || stage === 'DISCOVERY') {
+      cadenceType = 'ACTIVE_DEAL'; totalTouches = 8; intervalDays = 2;
+    } else if (stage === 'DISQUALIFIED') {
+      cadenceType = 'COLD_REENGAGEMENT'; totalTouches = 4; intervalDays = 10;
+    } else if (stage === 'CLOSED_LOST') {
+      cadenceType = 'LOST_DEAL'; totalTouches = 3; intervalDays = 14;
+    }
+
+    taskQueue.enqueue({
+      assignedTo: 'follow-up', createdBy: AGENT_ID,
+      type: 'TASK', priority: 'MEDIUM',
+      description: `Start ${cadenceType} sequence for ${prospectName} [${leadId}]. ${totalTouches} touches every ${intervalDays} days.`,
+    });
+
+    const now = new Date();
+    const touchDates = [];
+    for (let i = 0; i < totalTouches; i++) {
+      const d = new Date(now.getTime() + i * intervalDays * 24 * 60 * 60 * 1000);
+      touchDates.push(d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }));
+    }
+
+    const result = [
+      `FOLLOW-UP SEQUENCE PLAN`,
+      `─────────────────────────────────────`,
+      `Prospect:     ${prospectName}`,
+      `Lead ID:      ${leadId}`,
+      `Stage:        ${stage}`,
+      `Est. Value:   £${value.toLocaleString()}`,
+      ``,
+      `CADENCE: ${cadenceType} — ${totalTouches} touches every ${intervalDays} days`,
+      `Assigned:     Follow-Up Bot`,
+      ``,
+      `TOUCHPOINTS`,
+      ...touchDates.map((d, i) => `  Touch ${i + 1}: ${d}${i === 0 ? ' (today)' : ''}`),
+      ``,
+      `STATUS: Sequence queued.`,
+      `— Jordan, Sales Lead`,
+    ].join('\n');
+
+    memory.set(`sales-lead:followup:${leadId}`, {
+      leadId, prospectName, cadenceType, totalTouches, intervalDays,
+      generatedAt: now.toISOString(), report: result,
+    });
+    memory.set('sales-lead:lastFollowUp', {
+      leadId, prospectName, cadenceType, generatedAt: now.toISOString(),
+    });
+
+    logger.log(AGENT_ID, 'FOLLOWUP_SEQUENCE_CREATED', { leadId, cadenceType, totalTouches });
+    return result;
+  }
+
   // ─── Reporting ─────────────────────────────────────────────
 
   /**
