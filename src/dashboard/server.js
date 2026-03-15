@@ -10,7 +10,6 @@ import express from 'express';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '../core/logger.js';
 import { memory } from '../core/memory.js';
 import { agentRegistry } from '../core/agent-registry.js';
@@ -20,6 +19,7 @@ import { businessKnowledge } from '../core/business-knowledge.js';
 import { taskQueue } from '../core/task-queue.js';
 import { scheduler } from '../core/scheduler.js';
 import { mountOnboardingRoutes } from '../core/client-onboarding-api.js';
+import { workflowEngine } from '../core/workflow-engine.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = 3001;
@@ -213,8 +213,6 @@ function createDashboardServer() {
 
   // ─── API: Nikita Chat Message ──────────────────────────────
 
-  const anthropic = new Anthropic();
-
   app.post('/api/nikita/message', async (req, res) => {
     const { message } = req.body;
 
@@ -225,6 +223,8 @@ function createDashboardServer() {
     logger.log('nikita', 'DASHBOARD_CHAT_MESSAGE', { length: message.length });
 
     try {
+      const Anthropic2 = (await import('@anthropic-ai/sdk')).default;
+      const anthropic = new Anthropic2({ apiKey: process.env.ANTHROPIC_API_KEY });
       const bootCount = memory.get('bootCount') || 0;
       const agentCount = agentRegistry.list().length;
       const clients = businessKnowledge.listClients();
@@ -252,7 +252,7 @@ Current agency state:
 Respond naturally and conversationally. Keep replies concise but substantive. You're chatting with Harry in real time on the agency dashboard — be helpful, be direct, be yourself.`;
 
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 1024,
         system: systemPrompt,
         messages: [{ role: 'user', content: message }],
@@ -265,6 +265,66 @@ Respond naturally and conversationally. Keep replies concise but substantive. Yo
     } catch (err) {
       logger.log('nikita', 'DASHBOARD_CHAT_ERROR', { error: err.message });
       res.status(500).json({ error: 'Failed to get response from Nikita' });
+    }
+  });
+
+  // ─── API: Task Queue ─────────────────────────────────────
+
+  app.get('/api/tasks', (req, res) => {
+    try {
+      const all = taskQueue.getAll();
+      const grouped = {
+        pending: all.filter(t => t.status === 'PENDING'),
+        inProgress: all.filter(t => t.status === 'IN_PROGRESS'),
+        completed: all.filter(t => t.status === 'COMPLETED'),
+        failed: all.filter(t => t.status === 'FAILED'),
+      };
+      grouped.completed = grouped.completed.map(t => ({
+        ...t,
+        result: memory.get(`task-result:${t.id}`) || null,
+      }));
+      res.json(grouped);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── API: Workflows ─────────────────────────────────────
+
+  app.get('/api/workflows', (req, res) => {
+    try {
+      res.json(workflowEngine.listWorkflows());
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/workflows/:id', (req, res) => {
+    const wf = workflowEngine.getWorkflowStatus(req.params.id);
+    if (!wf) return res.status(404).json({ error: 'Workflow not found' });
+    res.json(wf);
+  });
+
+  app.post('/api/workflows/:id/approve', (req, res) => {
+    const ok = workflowEngine.approveWorkflow(req.params.id, 'harry');
+    if (!ok) return res.status(404).json({ error: 'Workflow not found or not waiting for approval' });
+    logger.log('dashboard', 'WORKFLOW_APPROVED', { workflowId: req.params.id });
+    res.json({ success: true, approvedBy: 'harry' });
+  });
+
+  // ─── API: Experience / Agent Stats ──────────────────────
+
+  app.get('/api/experience', (req, res) => {
+    try {
+      const topPerformers = experience.getTopPerformers(20);
+      const registeredIds = agentRegistry.list();
+      const allStats = registeredIds.map(id => ({
+        agentId: id,
+        ...experience.getStats(id),
+      }));
+      res.json({ topPerformers, allStats });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   });
 

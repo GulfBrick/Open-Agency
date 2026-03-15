@@ -3,6 +3,7 @@
  *
  * Polls the task queue for PENDING tasks and executes them via the agent registry.
  * Updates task status, records experience, and notifies Nikita when done.
+ * Includes retry logic — tasks get 3 attempts with exponential backoff.
  */
 
 import { logger } from './logger.js';
@@ -13,38 +14,67 @@ import { telegramNotifier } from './telegram-notifier.js';
 import { experience, OUTCOME } from './experience.js';
 import { memory } from './memory.js';
 
-const POLL_INTERVAL = 30_000; // 30 seconds
+const POLL_INTERVAL = 15_000; // 15 seconds (was 30s — too slow for a live agency)
+const MAX_RETRIES = 3;
+const BASE_RETRY_DELAY = 5_000; // 5s, 10s, 20s
 
 /**
  * Maps description patterns to specific agent methods.
  * The task executor uses these to call the right domain method
  * instead of falling back to generic processMessage.
+ *
+ * ORDER MATTERS — first match wins. More specific patterns go first.
  */
 const DESCRIPTION_METHOD_MAP = [
-  // Sales team
+  // ─── Onboarding tasks (highest priority — these are the ones that were stuck) ───
+  { pattern: /financial\s+health|financial\s+assessment|financial\s+plan|spending\s+threshold/i, method: 'generateDailySnapshot', argBuilder: () => [] },
+  { pattern: /tech\s+stack\s+audit|technical\s+infrastructure|tech\s+audit/i, method: 'generateDailyReport', argBuilder: () => [] },
+  { pattern: /brand.*assessment|market.*assessment|brand\s+positioning|market\s+landscape/i, method: 'generateDailyReport', argBuilder: () => [] },
+  { pattern: /development\s+kickoff|plan\s+initial\s+sprint|priority\s+deliverables/i, method: 'createSprint', argBuilder: (task) => [_extractClientId(task), [task.description]] },
+  { pattern: /sales\s+strategy|outreach\s+plan|pipeline|growth\s+opportunities/i, method: 'generateDailyReport', argBuilder: () => [] },
+  { pattern: /creative\s+kickoff|brand\s+guidelines|visual\s+identity|content\s+calendar/i, method: 'generateDailyReport', argBuilder: () => [] },
+
+  // ─── Sales team ───
   { pattern: /qualify\s+lead/i, method: 'qualifyLeadFromTask', argBuilder: (task) => [{ description: task.description }] },
-  { pattern: /generate\s+proposal|create\s+proposal/i, method: 'createProposal', argBuilder: (task) => [task.clientId || 'unknown', { scope: task.description }] },
+  { pattern: /generate\s+proposal|create\s+proposal/i, method: 'createProposal', argBuilder: (task) => [_extractClientId(task), { scope: task.description }] },
   { pattern: /follow.?up\s+sequence|nurture\s+sequence/i, method: 'followUpSequence', argBuilder: (task) => [task.description.match(/\[(LEAD-[^\]]+)\]/)?.[1] || task.description] },
-  // Dev team
-  { pattern: /create\s+sprint|sprint\s+plan/i, method: 'createSprint', argBuilder: (task) => [task.clientId || 'unknown', [task.description]] },
+
+  // ─── Dev team ───
+  { pattern: /create\s+sprint|sprint\s+plan/i, method: 'createSprint', argBuilder: (task) => [_extractClientId(task), [task.description]] },
   { pattern: /assign\s+task/i, method: 'assignTask', argBuilder: (task) => [task.assignedTo, task.description] },
-  { pattern: /sprint\s+status|sprint\s+progress/i, method: 'getSprintStatus', argBuilder: (task) => [task.clientId || 'unknown'] },
-  // Dev worker bots
+  { pattern: /sprint\s+status|sprint\s+progress/i, method: 'getSprintStatus', argBuilder: (task) => [_extractClientId(task)] },
   { pattern: /\[TASK-/i, method: 'executeTask', argBuilder: (task) => [task] },
-  // C-Suite reports
-  { pattern: /financial\s+health|financial\s+assessment/i, method: 'generateDailySnapshot', argBuilder: () => [] },
-  { pattern: /tech\s+stack\s+audit|infrastructure/i, method: 'generateDailyReport', argBuilder: () => [] },
-  { pattern: /brand.*assessment|market.*assessment|content\s+calendar/i, method: 'generateDailyReport', argBuilder: () => [] },
-  // Generic dev tasks
-  { pattern: /development\s+kickoff|plan\s+initial\s+sprint/i, method: 'createSprint', argBuilder: (task) => [task.clientId || task.description.match(/Client ID:\s*(\S+)/)?.[1] || 'unknown', [task.description]] },
-  { pattern: /sales\s+strategy|outreach\s+plan|pipeline/i, method: 'generateDailyReport', argBuilder: () => [] },
-  { pattern: /creative\s+kickoff|brand\s+guidelines/i, method: 'generateDailyReport', argBuilder: () => [] },
+
+  // ─── Catch-all for [ONBOARDING] tags — these MUST be handled ───
+  { pattern: /\[ONBOARDING\]/i, method: 'processMessage', argBuilder: (task) => [_taskToMessage(task)] },
 ];
+
+/** Extract clientId from task description (looks for "Client ID: xxx") */
+function _extractClientId(task) {
+  const match = task.description?.match(/Client ID:\s*(\S+)/i);
+  return match?.[1] || task.clientId || 'unknown';
+}
+
+/** Convert a task object into a message bus message shape for processMessage fallback */
+function _taskToMessage(task) {
+  return {
+    id: task.id,
+    from: task.createdBy || 'task-executor',
+    to: task.assignedTo,
+    type: task.type,
+    priority: task.priority,
+    payload: { description: task.description, taskId: task.id },
+  };
+}
 
 class TaskExecutor {
   constructor() {
     this._interval = null;
     this.running = false;
+    /** @type {Map<string, number>} taskId → retry count */
+    this._retries = new Map();
+    /** @type {Map<string, number>} taskId → timestamp of next retry */
+    this._retryAfter = new Map();
   }
 
   /**
@@ -81,9 +111,18 @@ class TaskExecutor {
     const pending = taskQueue.getAll(TASK_STATUS.PENDING);
     if (pending.length === 0) return;
 
-    logger.log('task-executor', 'POLL', { pendingCount: pending.length });
+    const now = Date.now();
+    // Filter out tasks that are waiting for a retry backoff
+    const ready = pending.filter(task => {
+      const retryAfter = this._retryAfter.get(task.id);
+      return !retryAfter || now >= retryAfter;
+    });
 
-    for (const task of pending) {
+    if (ready.length === 0) return;
+
+    logger.log('task-executor', 'POLL', { pendingCount: pending.length, readyCount: ready.length });
+
+    for (const task of ready) {
       try {
         await this.executeTask(task);
       } catch (err) {
@@ -93,7 +132,7 @@ class TaskExecutor {
   }
 
   /**
-   * Execute a single task.
+   * Execute a single task with retry support.
    * @param {object} task — task from the queue
    */
   async executeTask(task) {
@@ -107,13 +146,19 @@ class TaskExecutor {
     }
 
     // Resolve the best method and arguments for this task
-    const resolved = this._resolveMethod(agent, task);
+    let resolved = this._resolveMethod(agent, task);
     if (!resolved) {
-      logger.log('task-executor', 'NO_METHOD', { agentId: task.assignedTo, taskType: task.type, taskId: task.id });
-      taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
-      telegramNotifier.notifyTaskFailed(task, `No suitable method for task type '${task.type}'`);
-      this._notifyNikita(task, TASK_STATUS.FAILED, null, `No method for type: ${task.type}`);
-      return;
+      // Last resort: wrap as a processMessage call if agent has it
+      if (typeof agent.processMessage === 'function') {
+        logger.log('task-executor', 'FALLBACK_TO_PROCESS_MESSAGE', { agentId: task.assignedTo, taskId: task.id });
+        resolved = { method: 'processMessage', args: [_taskToMessage(task)] };
+      } else {
+        logger.log('task-executor', 'NO_METHOD', { agentId: task.assignedTo, taskType: task.type, taskId: task.id });
+        taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
+        telegramNotifier.notifyTaskFailed(task, `No suitable method for task type '${task.type}'`);
+        this._notifyNikita(task, TASK_STATUS.FAILED, null, `No method for type: ${task.type}`);
+        return;
+      }
     }
 
     const { method, args } = resolved;
@@ -152,6 +197,10 @@ class TaskExecutor {
       telegramNotifier.notifyTaskCompleted(task);
       this._notifyNikita(task, TASK_STATUS.COMPLETED, result);
 
+      // Clean up retry state
+      this._retries.delete(task.id);
+      this._retryAfter.delete(task.id);
+
       logger.log('task-executor', 'TASK_COMPLETED', {
         taskId: task.id,
         agentId: task.assignedTo,
@@ -160,30 +209,55 @@ class TaskExecutor {
       });
     } catch (err) {
       const duration = Date.now() - startTime;
+      const attempt = (this._retries.get(task.id) || 0) + 1;
 
-      // Mark FAILED
-      taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
+      if (attempt < MAX_RETRIES) {
+        // Retry with exponential backoff
+        const delay = BASE_RETRY_DELAY * Math.pow(2, attempt - 1);
+        this._retries.set(task.id, attempt);
+        this._retryAfter.set(task.id, Date.now() + delay);
 
-      experience.recordTask(task.assignedTo, {
-        taskId: task.id,
-        taskType: task.type,
-        outcome: OUTCOME.FAIL,
-        duration,
-        skillsUsed: [method],
-        clientId: task.clientId || null,
-        notes: `FAILED: ${err.message}`,
-      });
+        // Put back to PENDING for retry
+        taskQueue.updateStatus(task.id, TASK_STATUS.PENDING);
 
-      telegramNotifier.notifyTaskFailed(task, err.message);
-      this._notifyNikita(task, TASK_STATUS.FAILED, null, err.message);
+        logger.log('task-executor', 'TASK_RETRY_SCHEDULED', {
+          taskId: task.id,
+          agentId: task.assignedTo,
+          attempt,
+          maxRetries: MAX_RETRIES,
+          retryInMs: delay,
+          error: err.message,
+        });
+      } else {
+        // All retries exhausted — mark FAILED permanently
+        taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
 
-      logger.log('task-executor', 'TASK_FAILED', {
-        taskId: task.id,
-        agentId: task.assignedTo,
-        method,
-        error: err.message,
-        duration,
-      });
+        experience.recordTask(task.assignedTo, {
+          taskId: task.id,
+          taskType: task.type,
+          outcome: OUTCOME.FAIL,
+          duration,
+          skillsUsed: [method],
+          clientId: task.clientId || null,
+          notes: `FAILED after ${MAX_RETRIES} attempts: ${err.message}`,
+        });
+
+        telegramNotifier.notifyTaskFailed(task, `Failed after ${MAX_RETRIES} attempts: ${err.message}`);
+        this._notifyNikita(task, TASK_STATUS.FAILED, null, err.message);
+
+        // Clean up retry state
+        this._retries.delete(task.id);
+        this._retryAfter.delete(task.id);
+
+        logger.log('task-executor', 'TASK_FAILED', {
+          taskId: task.id,
+          agentId: task.assignedTo,
+          method,
+          error: err.message,
+          duration,
+          attempts: MAX_RETRIES,
+        });
+      }
     }
   }
 

@@ -2428,6 +2428,46 @@
         </div>
       </div>
 
+      <!-- Task Queue (LIVE) -->
+      <div class="dash-card card-tasks" style="grid-column: span 2;">
+        <div class="dash-card-title">
+          <span class="card-icon">&#9889;</span> Live Task Queue
+          <span class="card-badge" id="task-total">0</span>
+        </div>
+        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+          <div style="flex:1; text-align:center; padding: 8px; background: rgba(245,158,11,0.1); border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: 700; color: var(--amber);" id="task-pending-count">0</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Pending</div>
+          </div>
+          <div style="flex:1; text-align:center; padding: 8px; background: rgba(59,130,246,0.1); border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: 700; color: var(--blue);" id="task-progress-count">0</div>
+            <div style="font-size: 11px; color: var(--text-muted);">In Progress</div>
+          </div>
+          <div style="flex:1; text-align:center; padding: 8px; background: rgba(16,185,129,0.1); border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: 700; color: var(--green);" id="task-completed-count">0</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Completed</div>
+          </div>
+          <div style="flex:1; text-align:center; padding: 8px; background: rgba(244,63,94,0.1); border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: 700; color: var(--rose);" id="task-failed-count">0</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Failed</div>
+          </div>
+        </div>
+        <div class="task-feed" id="task-feed" style="max-height: 280px; overflow-y: auto;">
+          <div style="color: var(--text-muted); font-size: 12px;">Loading tasks...</div>
+        </div>
+      </div>
+
+      <!-- Workflows -->
+      <div class="dash-card card-workflows">
+        <div class="dash-card-title">
+          <span class="card-icon">&#128736;</span> Workflows
+          <span class="card-badge" id="workflow-count">0</span>
+        </div>
+        <div id="workflow-list" style="max-height: 280px; overflow-y: auto;">
+          <div style="color: var(--text-muted); font-size: 12px;">No active workflows</div>
+        </div>
+      </div>
+
       <!-- Row 2: Clients | Scheduled Tasks | Activity Log -->
 
       <!-- Clients -->
@@ -2706,8 +2746,10 @@
       renderLogs(data.recentLogs);
       renderUptime(data.systemHealth);
       renderCEOBrief(data.lastBriefing);
-      renderSchedules([]);
       renderAgents(data.agents);
+      // Fetch live task data and workflows
+      fetchTasks();
+      fetchWorkflows();
     }
 
     // ─── Animated Counter ────────────────────────────────
@@ -2861,10 +2903,133 @@
 
     // ─── Agents (kept for compatibility) ─────────────────
     function renderAgents(agents) {
-      // Agent data is now rendered in the building.
-      // This function is kept for API compatibility.
       const countEl = document.getElementById('agent-count');
       if (countEl) countEl.textContent = `${agents?.length || 0} agents`;
+    }
+
+    // ─── Live Task Queue ─────────────────────────────────
+    async function fetchTasks() {
+      try {
+        const res = await fetch(`${API}/api/tasks`);
+        if (!res.ok) return;
+        const data = await res.json();
+        renderTasks(data);
+      } catch (err) {
+        console.error('Failed to fetch tasks:', err);
+      }
+    }
+
+    function renderTasks(data) {
+      const pending = data.pending || [];
+      const inProgress = data.inProgress || [];
+      const completed = data.completed || [];
+      const failed = data.failed || [];
+      const total = pending.length + inProgress.length + completed.length + failed.length;
+
+      document.getElementById('task-total').textContent = total;
+      document.getElementById('task-pending-count').textContent = pending.length;
+      document.getElementById('task-progress-count').textContent = inProgress.length;
+      document.getElementById('task-completed-count').textContent = completed.length;
+      document.getElementById('task-failed-count').textContent = failed.length;
+
+      const feed = document.getElementById('task-feed');
+      if (total === 0) {
+        feed.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 8px;">No tasks in queue</div>';
+        return;
+      }
+
+      // Show most recent tasks first (in progress > pending > completed > failed)
+      const allTasks = [
+        ...inProgress.map(t => ({ ...t, _statusColor: 'var(--blue)', _statusLabel: 'IN PROGRESS' })),
+        ...pending.map(t => ({ ...t, _statusColor: 'var(--amber)', _statusLabel: 'PENDING' })),
+        ...completed.slice(-10).reverse().map(t => ({ ...t, _statusColor: 'var(--green)', _statusLabel: 'DONE' })),
+        ...failed.slice(-5).reverse().map(t => ({ ...t, _statusColor: 'var(--rose)', _statusLabel: 'FAILED' })),
+      ];
+
+      feed.innerHTML = allTasks.map(t => {
+        const shortDesc = (t.description || '').replace(/\[ONBOARDING\]\s*/i, '').split('.')[0].substring(0, 80);
+        const priorityBadge = t.priority === 'HIGH' ? '<span style="color:var(--rose);font-size:10px;font-weight:600;">HIGH</span>' : '';
+        return `<div style="padding: 6px 0; border-bottom: 1px solid rgba(124,58,237,0.06); display: flex; align-items: flex-start; gap: 8px;">
+          <div style="min-width: 70px;">
+            <span style="font-size:10px;font-weight:600;color:${t._statusColor};text-transform:uppercase;">${t._statusLabel}</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:12px;color:var(--text);">${esc(shortDesc)}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">
+              <span style="font-family:var(--mono);">${esc(t.assignedTo)}</span> ${priorityBadge}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ─── Workflows ───────────────────────────────────────
+    async function fetchWorkflows() {
+      try {
+        const res = await fetch(`${API}/api/workflows`);
+        if (!res.ok) return;
+        const data = await res.json();
+        renderWorkflows(data);
+      } catch (err) {
+        console.error('Failed to fetch workflows:', err);
+      }
+    }
+
+    function renderWorkflows(workflows) {
+      const el = document.getElementById('workflow-list');
+      const countEl = document.getElementById('workflow-count');
+      countEl.textContent = workflows.length;
+
+      if (workflows.length === 0) {
+        el.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 8px;">No active workflows</div>';
+        return;
+      }
+
+      const statusColors = {
+        'PENDING': 'var(--text-muted)',
+        'RUNNING': 'var(--blue)',
+        'WAITING_APPROVAL': 'var(--amber)',
+        'DONE': 'var(--green)',
+        'FAILED': 'var(--rose)',
+      };
+
+      el.innerHTML = workflows.map(wf => {
+        const color = statusColors[wf.status] || 'var(--text-muted)';
+        const stepsTotal = wf.steps?.length || 0;
+        const stepsDone = wf.steps?.filter(s => s.status === 'DONE').length || 0;
+        const needsApproval = wf.status === 'WAITING_APPROVAL';
+        const shortId = wf.workflowId.substring(0, 8);
+
+        let approveBtn = '';
+        if (needsApproval) {
+          approveBtn = `<button onclick="approveWorkflow('${esc(wf.workflowId)}')" style="margin-top:6px;padding:4px 12px;font-size:11px;font-weight:600;border:none;border-radius:6px;background:var(--green);color:#fff;cursor:pointer;">Approve</button>`;
+        }
+
+        return `<div style="padding: 8px 0; border-bottom: 1px solid rgba(124,58,237,0.06);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(wf.name)}</div>
+            <span style="font-size:10px;font-weight:600;color:${color};text-transform:uppercase;">${wf.status.replace('_',' ')}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+            ${esc(wf.clientId || '')} &middot; ${stepsDone}/${stepsTotal} steps &middot; <span style="font-family:var(--mono);">${shortId}</span>
+          </div>
+          ${approveBtn}
+        </div>`;
+      }).join('');
+    }
+
+    async function approveWorkflow(workflowId) {
+      try {
+        const res = await fetch(`${API}/api/workflows/${workflowId}/approve`, { method: 'POST' });
+        if (res.ok) {
+          showToast('Workflow approved');
+          fetchWorkflows();
+        } else {
+          showToast('Approval failed');
+        }
+      } catch (err) {
+        showToast('Error: ' + err.message);
+      }
     }
 
     // ─── Pipeline ───────────────────────────────────────
@@ -3131,12 +3296,14 @@
     // ─── Init ───────────────────────────────────────────
     async function init() {
       initParticles();
-      await Promise.all([fetchStatus(), fetchSchedules()]);
+      await Promise.all([fetchStatus(), fetchSchedules(), fetchTasks(), fetchWorkflows()]);
       dismissLoadingOverlay();
       // Refresh every 10 seconds
       refreshTimer = setInterval(() => {
         fetchStatus();
         fetchSchedules();
+        fetchTasks();
+        fetchWorkflows();
       }, 10000);
     }
 
