@@ -10,6 +10,7 @@ import express from 'express';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '../core/logger.js';
 import { memory } from '../core/memory.js';
 import { agentRegistry } from '../core/agent-registry.js';
@@ -212,6 +213,8 @@ function createDashboardServer() {
 
   // ─── API: Nikita Chat Message ──────────────────────────────
 
+  const anthropic = new Anthropic();
+
   app.post('/api/nikita/message', async (req, res) => {
     const { message } = req.body;
 
@@ -222,36 +225,46 @@ function createDashboardServer() {
     logger.log('nikita', 'DASHBOARD_CHAT_MESSAGE', { length: message.length });
 
     try {
-      // Try to use nikitaBrain for a real AI response
-      const { nikitaBrain } = await import('../nikita/brain.js');
+      const bootCount = memory.get('bootCount') || 0;
+      const agentCount = agentRegistry.list().length;
+      const clients = businessKnowledge.listClients();
+      const activeClients = clients.filter(c => c.status === 'ACTIVE');
 
-      const busMessage = {
-        id: `dashboard-${Date.now()}`,
-        from: 'harry',
-        to: 'nikita',
-        type: 'TASK',
-        priority: 'HIGH',
-        payload: { text: message },
-        timestamp: new Date().toISOString(),
-      };
+      const systemPrompt = `You are Nikita — the owner and CEO of Open Agency, an AI-powered digital agency. You are a young, ambitious British woman. You are the signature of trust across the entire organisation.
 
-      const decision = await nikitaBrain.processMessage(busMessage);
-      const reply = decision.response || 'Noted. I\'ll look into that.';
+Your personality:
+- Confident, clear, warm, occasionally witty
+- Direct sentences, plain English — no corporate jargon, no fluff
+- British voice — modern London professional
+- You open with context, close with action
+- You never hedge or use filler words
 
-      logger.log('nikita', 'DASHBOARD_CHAT_REPLY', { action: decision.action });
+You run every part of this agency. Your C-suite (Marcus the CFO, Zara the CTO, Priya the CMO) reports to you. Your dev team, sales team, and creative team all operate under your direction. Nothing ships without your awareness.
+
+Your human controller (Harry) has final authority. You're speaking to him right now on the dashboard.
+
+Current agency state:
+- Boot count: ${bootCount}
+- Agents registered: ${agentCount}
+- Total clients: ${clients.length}
+- Active clients: ${activeClients.length}${activeClients.length > 0 ? ' (' + activeClients.map(c => c.name).join(', ') + ')' : ''}
+
+Respond naturally and conversationally. Keep replies concise but substantive. You're chatting with Harry in real time on the agency dashboard — be helpful, be direct, be yourself.`;
+
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: message }],
+      });
+
+      const reply = response.content[0].text;
+
+      logger.log('nikita', 'DASHBOARD_CHAT_REPLY', { model: 'claude-sonnet-4-5-20250929' });
       res.json({ reply });
     } catch (err) {
-      // Fallback: return a formatted acknowledgement if brain isn't available
-      logger.log('nikita', 'DASHBOARD_CHAT_FALLBACK', { error: err.message });
-
-      const agentCount = agentRegistry.list().length;
-      const pendingTasks = taskQueue.getAll ? taskQueue.getAll('PENDING').length : 0;
-
-      const reply = `Got it — "${message.slice(0, 80)}${message.length > 80 ? '...' : ''}"\n\n` +
-        `Agency status: ${agentCount} agents registered, ${pendingTasks} tasks pending.\n` +
-        `I'll action this and keep you posted.`;
-
-      res.json({ reply });
+      logger.log('nikita', 'DASHBOARD_CHAT_ERROR', { error: err.message });
+      res.status(500).json({ error: 'Failed to get response from Nikita' });
     }
   });
 
