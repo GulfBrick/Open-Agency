@@ -307,27 +307,132 @@ class CmoBrain extends AgentBrain {
 
   /**
    * Generate the daily marketing report.
-   * @returns {Promise<string>}
+   * Reviews marketing state, generates a content suggestion for the day,
+   * formats a full marketing update, logs and persists the report.
+   * @returns {string} Formatted marketing report
    */
-  async generateDailyReport() {
-    const summary = this.getPerformanceSummary();
+  generateDailyReport() {
     const state = this.getMarketingState();
+    const summary = this.getPerformanceSummary();
 
-    const report = await this.generateReport('daily-marketing-report', {
-      performance: summary,
-      activeCampaigns: state.campaigns
-        .filter(c => c.status === CAMPAIGN_STATUS.ACTIVE)
-        .map(c => ({
-          name: c.name,
-          channel: c.channel,
-          spent: c.spent,
-          budget: c.budget,
-          metrics: c.metrics,
-        })),
-      topKeywords: state.seo.trackedKeywords.slice(0, 10),
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Active campaigns breakdown
+    const activeCampaigns = state.campaigns.filter(c => c.status === CAMPAIGN_STATUS.ACTIVE);
+    const campaignLines = activeCampaigns.map(c => {
+      const budgetPct = c.budget > 0 ? Math.round((c.spent / c.budget) * 100) : 0;
+      const ctr = c.metrics.impressions > 0
+        ? ((c.metrics.clicks / c.metrics.impressions) * 100).toFixed(2)
+        : '0.00';
+      const flag = budgetPct >= 90 ? ' [NEAR BUDGET]' : '';
+      return `  ${c.name} (${c.channel}): ${c.metrics.impressions.toLocaleString()} imps, ${ctr}% CTR, £${c.spent.toLocaleString()} / £${c.budget.toLocaleString()} (${budgetPct}%)${flag}`;
     });
 
-    this.sendReportToNikita('daily-marketing-report', report);
+    // Upcoming content (next 7 days)
+    const weekAhead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const upcomingContent = state.contentCalendar
+      .filter(c => c.status === 'scheduled' && new Date(c.scheduledDate) > now && new Date(c.scheduledDate) <= weekAhead)
+      .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate))
+      .slice(0, 10);
+    const contentLines = upcomingContent.map(c => {
+      const day = new Date(c.scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric' });
+      return `  ${day} — ${c.platform} (${c.contentType}): ${c.title}`;
+    });
+
+    // SEO keyword movers
+    const keywordMovers = state.seo.trackedKeywords
+      .filter(k => k.previousRank !== null)
+      .map(k => ({ ...k, change: k.previousRank - k.currentRank }))
+      .sort((a, b) => b.change - a.change)
+      .slice(0, 5);
+    const keywordLines = keywordMovers.map(k => {
+      const arrow = k.change > 0 ? `↑${k.change}` : (k.change < 0 ? `↓${Math.abs(k.change)}` : '—');
+      return `  "${k.keyword}": rank ${k.currentRank} (${arrow})`;
+    });
+
+    // Daily content suggestion based on brand context
+    const dayOfWeek = now.getDay();
+    const contentThemes = [
+      'Behind-the-scenes agency culture post — show the team in action',
+      'Client success story or case study highlight',
+      'Industry insight or thought leadership piece',
+      'Interactive content: poll, quiz, or Q&A session',
+      'Product/service spotlight with clear CTA',
+      'Community engagement: share a partner or collaborator',
+      'Weekend roundup or week-ahead preview',
+    ];
+    const todaySuggestion = contentThemes[dayOfWeek];
+
+    const report = [
+      `DAILY MARKETING REPORT — ${dateStr}`,
+      `${'─'.repeat(50)}`,
+      ``,
+      `PERFORMANCE OVERVIEW`,
+      `  Active campaigns: ${summary.activeCampaigns} of ${summary.totalCampaigns} total`,
+      `  Total spend: £${summary.totalSpend.toLocaleString()}`,
+      `  Impressions: ${summary.totalImpressions.toLocaleString()}`,
+      `  Clicks: ${summary.totalClicks.toLocaleString()} (${summary.overallCTR}% CTR)`,
+      `  Conversions: ${summary.totalConversions.toLocaleString()}`,
+      `  Tracked keywords: ${summary.trackedKeywords}`,
+    ];
+
+    if (campaignLines.length > 0) {
+      report.push(``, `ACTIVE CAMPAIGNS`, ...campaignLines);
+    } else {
+      report.push(``, `ACTIVE CAMPAIGNS`, `  None currently running`);
+    }
+
+    if (contentLines.length > 0) {
+      report.push(``, `UPCOMING CONTENT (Next 7 Days)`, ...contentLines);
+    } else {
+      report.push(``, `UPCOMING CONTENT`, `  No content scheduled for the next 7 days — needs attention`);
+    }
+
+    if (keywordLines.length > 0) {
+      report.push(``, `SEO KEYWORD MOVERS`, ...keywordLines);
+    }
+
+    report.push(
+      ``,
+      `TODAY'S CONTENT SUGGESTION`,
+      `  ${todaySuggestion}`,
+    );
+
+    // Flags
+    const flags = [];
+    if (summary.activeCampaigns === 0 && summary.totalCampaigns > 0) flags.push('No active campaigns — review pipeline');
+    if (contentLines.length === 0) flags.push('Content calendar empty for the week — schedule content ASAP');
+    const nearBudget = activeCampaigns.filter(c => c.budget > 0 && c.spent > c.budget * 0.9);
+    if (nearBudget.length > 0) flags.push(`${nearBudget.length} campaign(s) near budget limit — review or pause`);
+
+    if (flags.length > 0) {
+      report.push(``, `ACTION ITEMS`, ...flags.map(f => `  ⚠ ${f}`));
+    } else {
+      report.push(``, `STATUS: Marketing operations running smoothly`);
+    }
+
+    report.push(``, `— Priya, CMO`);
+
+    const reportText = report.join('\n');
+
+    // Log and persist
+    logger.log(AGENT_ID, 'DAILY_REPORT_GENERATED', {
+      activeCampaigns: summary.activeCampaigns,
+      totalSpend: summary.totalSpend,
+      impressions: summary.totalImpressions,
+      conversions: summary.totalConversions,
+      flagCount: flags.length,
+    });
+
+    memory.set('cmo:lastReport', {
+      generatedAt: now.toISOString(),
+      performance: summary,
+      suggestion: todaySuggestion,
+      report: reportText,
+    });
+
+    this.sendReportToNikita('daily-marketing-report', reportText);
 
     // Report spend to CFO
     messageBus.send({
@@ -342,7 +447,7 @@ class CmoBrain extends AgentBrain {
       },
     });
 
-    return report;
+    return reportText;
   }
 
   /**

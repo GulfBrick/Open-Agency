@@ -316,23 +316,161 @@ class CtoBrain extends AgentBrain {
 
   /**
    * Generate the daily systems report.
-   * @returns {Promise<string>}
+   * Reviews tech state, reports on infrastructure status, security,
+   * tech debt, and pending ADRs. Logs and persists the report.
+   * @returns {string} Formatted tech status report
    */
-  async generateDailyReport() {
-    const health = this.getSystemHealth();
+  generateDailyReport() {
     const state = this.getTechState();
+    const health = this.getSystemHealth();
 
-    const report = await this.generateReport('daily-systems-report', {
-      systemHealth: health,
-      recentIncidents: state.security.incidentHistory.slice(-5),
-      infraCost: state.infrastructure.monthlyCost,
-      openTechDebt: state.techDebt.filter(td => td.status === 'open'),
-      pendingADRs: state.adrs.filter(a => a.status === 'proposed'),
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Service health breakdown
+    const services = Object.entries(state.services);
+    const serviceLines = services.map(([id, svc]) => {
+      const statusIcon = svc.status === 'HEALTHY' ? '✓'
+        : svc.status === 'DEGRADED' ? '⚠'
+        : svc.status === 'DOWN' ? '✗'
+        : '?';
+      const lastCheck = svc.lastCheck
+        ? new Date(svc.lastCheck).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+        : 'never';
+      const extra = [];
+      if (svc.errorRate > 0) extra.push(`err: ${svc.errorRate}%`);
+      if (svc.responseTime) extra.push(`${svc.responseTime}ms`);
+      const extraStr = extra.length > 0 ? ` (${extra.join(', ')})` : '';
+      return `  ${statusIcon} ${svc.name} [${svc.type}]: ${svc.status} — last check ${lastCheck}${extraStr}`;
     });
 
-    this.sendReportToNikita('daily-systems-report', report);
+    // Security summary
+    const openIncidents = state.security.incidentHistory.filter(i => i.status === 'open');
+    const recentIncidents = state.security.incidentHistory.slice(-5);
+    const incidentLines = recentIncidents.map(i => {
+      const date = new Date(i.reportedAt).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+      const resolved = i.resolvedAt ? '(resolved)' : '(OPEN)';
+      return `  [${i.severity.toUpperCase()}] ${date} — ${i.description} ${resolved}`;
+    });
 
-    // Also send infra spend to CFO
+    // Tech debt
+    const openDebt = state.techDebt.filter(td => td.status === 'open');
+    const debtByImpact = { high: 0, medium: 0, low: 0 };
+    openDebt.forEach(td => { debtByImpact[td.impact] = (debtByImpact[td.impact] || 0) + 1; });
+    const debtLines = openDebt.slice(0, 5).map(td => {
+      return `  [${td.impact.toUpperCase()}] ${td.area}: ${td.description}`;
+    });
+
+    // Pending ADRs
+    const pendingADRs = state.adrs.filter(a => a.status === 'proposed');
+    const adrLines = pendingADRs.map(a => `  ${a.id}: ${a.title}`);
+
+    // Infrastructure
+    const infra = state.infrastructure;
+    const resourceLines = (infra.resources || []).map(r => {
+      return `  ${r.name} (${r.type}): £${(r.cost || 0).toLocaleString()}/mo`;
+    });
+
+    // Overall status assessment
+    let overallStatus;
+    if (health.down > 0) overallStatus = 'CRITICAL — services down';
+    else if (health.degraded > 0 || openIncidents.length > 0) overallStatus = 'DEGRADED — issues need attention';
+    else if (health.totalServices === 0) overallStatus = 'NO SERVICES REGISTERED — set up monitoring';
+    else overallStatus = 'ALL SYSTEMS OPERATIONAL';
+
+    const report = [
+      `DAILY TECH STATUS REPORT — ${dateStr}`,
+      `${'─'.repeat(50)}`,
+      ``,
+      `OVERALL: ${overallStatus}`,
+      ``,
+      `SYSTEM HEALTH`,
+      `  Total services: ${health.totalServices}`,
+      `  Healthy: ${health.healthy} | Degraded: ${health.degraded} | Down: ${health.down} | Unknown: ${health.unknown}`,
+    ];
+
+    if (serviceLines.length > 0) {
+      report.push(``, `SERVICE DETAIL`, ...serviceLines);
+    }
+
+    report.push(
+      ``,
+      `INFRASTRUCTURE`,
+      `  Provider: ${infra.provider || 'Not set'}`,
+      `  Monthly cost: £${infra.monthlyCost.toLocaleString()}`,
+    );
+    if (resourceLines.length > 0) {
+      report.push(...resourceLines);
+    }
+
+    report.push(
+      ``,
+      `SECURITY`,
+      `  Open vulnerabilities: ${state.security.openVulnerabilities}`,
+      `  Open incidents: ${openIncidents.length}`,
+      `  Last scan: ${state.security.lastScan || 'Never'}`,
+    );
+    if (incidentLines.length > 0) {
+      report.push(`  Recent incidents:`, ...incidentLines);
+    }
+
+    report.push(
+      ``,
+      `TECH DEBT (${openDebt.length} open)`,
+      `  High: ${debtByImpact.high} | Medium: ${debtByImpact.medium} | Low: ${debtByImpact.low}`,
+    );
+    if (debtLines.length > 0) {
+      report.push(...debtLines);
+    }
+
+    if (adrLines.length > 0) {
+      report.push(``, `PENDING ADRs (awaiting approval)`, ...adrLines);
+    }
+
+    // Recommendations
+    const recommendations = [];
+    if (health.down > 0) recommendations.push(`Restore ${health.down} downed service(s) immediately`);
+    if (health.degraded > 0) recommendations.push(`Investigate ${health.degraded} degraded service(s)`);
+    if (openIncidents.length > 0) recommendations.push(`Resolve ${openIncidents.length} open security incident(s)`);
+    if (state.security.openVulnerabilities > 0) recommendations.push(`Patch ${state.security.openVulnerabilities} open vulnerability/ies`);
+    if (debtByImpact.high > 0) recommendations.push(`Address ${debtByImpact.high} high-impact tech debt item(s)`);
+    if (!state.security.lastScan) recommendations.push(`Run initial security scan`);
+    if (health.totalServices === 0) recommendations.push(`Register services for health monitoring`);
+    if (pendingADRs.length > 0) recommendations.push(`Review ${pendingADRs.length} pending ADR(s) with Nikita`);
+
+    if (recommendations.length > 0) {
+      report.push(``, `RECOMMENDATIONS`, ...recommendations.map(r => `  → ${r}`));
+    } else {
+      report.push(``, `STATUS: Infrastructure stable — no action required`);
+    }
+
+    report.push(``, `— Zara, CTO`);
+
+    const reportText = report.join('\n');
+
+    // Log and persist
+    logger.log(AGENT_ID, 'DAILY_REPORT_GENERATED', {
+      totalServices: health.totalServices,
+      healthy: health.healthy,
+      down: health.down,
+      degraded: health.degraded,
+      openIncidents: openIncidents.length,
+      openDebt: openDebt.length,
+      infraCost: infra.monthlyCost,
+      recommendationCount: recommendations.length,
+    });
+
+    memory.set('cto:lastReport', {
+      generatedAt: now.toISOString(),
+      overallStatus,
+      health,
+      infraCost: infra.monthlyCost,
+      report: reportText,
+    });
+
+    this.sendReportToNikita('daily-systems-report', reportText);
+
+    // Send infra spend to CFO
     messageBus.send({
       from: AGENT_ID,
       to: 'cfo',
@@ -340,12 +478,12 @@ class CtoBrain extends AgentBrain {
       priority: PRIORITY.LOW,
       payload: {
         reportType: 'infra-spend',
-        monthlyCost: state.infrastructure.monthlyCost,
-        resources: state.infrastructure.resources,
+        monthlyCost: infra.monthlyCost,
+        resources: infra.resources,
       },
     });
 
-    return report;
+    return reportText;
   }
 
   /**

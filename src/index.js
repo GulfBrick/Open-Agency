@@ -66,55 +66,9 @@ function initClients() {
 }
 
 /**
- * Create the initial demo agent profiles and assign them to Clearline Markets.
- */
-function initAgents() {
-  const agents = [
-    { id: 'cfo-001', name: 'Chief Financial Officer', role: 'CFO', department: 'Finance' },
-    { id: 'cto-001', name: 'Chief Technology Officer', role: 'CTO', department: 'Technology' },
-    { id: 'dev-lead-001', name: 'Dev Team Lead', role: 'Dev Team Lead', department: 'Engineering' },
-  ];
-
-  for (const agent of agents) {
-    agentProfile.createAgent(agent.id, agent.name, agent.role, agent.department);
-    agentProfile.assignToClient(agent.id, 'clearline-markets');
-  }
-
-  logger.log('system', 'DEMO_AGENTS_CREATED', { count: agents.length });
-}
-
-/**
- * Simulate a task completion for cfo-001 and check promotion eligibility.
- */
-function simulateCfoTask() {
-  // Record one successful task for the CFO
-  experience.recordTask('cfo-001', {
-    taskId: 'demo-task-001',
-    taskType: 'financial-report',
-    outcome: OUTCOME.SUCCESS,
-    duration: 4500,
-    skillsUsed: ['financial-analysis', 'reporting'],
-    clientId: 'clearline-markets',
-    notes: 'Initial demo task — Q1 financial summary for Clearline Markets.',
-  });
-
-  // Check promotion eligibility
-  const evaluation = promotion.evaluateAgent('cfo-001');
-  logger.log('system', 'PROMOTION_CHECK', {
-    agentId: 'cfo-001',
-    eligible: evaluation.eligible,
-    reason: evaluation.reason,
-    currentRank: evaluation.currentRank,
-    nextRank: evaluation.nextRank,
-  });
-
-  return evaluation;
-}
-
-/**
  * Print a clean startup summary to the console.
  */
-function printStartupSummary(bootCount, cfoEvaluation, csuiteAgents = {}) {
+function printStartupSummary(bootCount, csuiteAgents = {}) {
   const agents = agentProfile.listAgents();
   const clients = businessKnowledge.listClients();
   const csuiteCount = Object.keys(csuiteAgents).length;
@@ -198,11 +152,6 @@ function printStartupSummary(bootCount, cfoEvaluation, csuiteAgents = {}) {
   console.log('  All Agents:');
   for (const agent of agents) {
     console.log(`    ${agent.agentId} — ${agent.rank} (${agent.department}) [${agent.status}]`);
-  }
-  console.log('----------------------------------------');
-  console.log(`  CFO Promotion Check: ${cfoEvaluation.eligible ? 'ELIGIBLE' : 'Not yet'}`);
-  if (!cfoEvaluation.eligible) {
-    console.log(`    Reason: ${cfoEvaluation.reason}`);
   }
   console.log('----------------------------------------');
   console.log('');
@@ -294,10 +243,8 @@ async function boot() {
   // Register Nikita in the registry so scheduler can dispatch to her
   agentRegistry.register('nikita', nikitaBrain);
 
-  // Register clients, create agents, run demo simulation
+  // Register clients
   initClients();
-  initAgents();
-  const cfoEvaluation = simulateCfoTask();
 
   // Start the task executor — polls the queue and runs tasks through agents
   taskExecutor.start();
@@ -313,7 +260,7 @@ async function boot() {
   logger.log('system', 'DASHBOARD_STARTED', { port: 3001 });
 
   // Print the startup summary
-  printStartupSummary(bootCount, cfoEvaluation, csuiteAgents);
+  printStartupSummary(bootCount, csuiteAgents);
 
   console.log(`  Nikita is online. Boot #${bootCount}.`);
   console.log('  Waiting for messages...');

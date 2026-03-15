@@ -274,19 +274,105 @@ class CfoBrain extends AgentBrain {
 
   /**
    * Generate the daily financial snapshot.
-   * @returns {Promise<string>}
+   * Reads financial state, computes key metrics, formats a summary,
+   * logs the action, persists a timestamped snapshot, and reports to Nikita.
+   * @returns {string} Formatted financial summary
    */
-  async generateDailySnapshot() {
+  generateDailySnapshot() {
     const fin = this.getFinancials();
+    const overdue = this.checkOverdueInvoices();
     const budgets = this.checkBudgets();
 
-    const report = await this.generateReport('daily-financial-snapshot', {
-      revenue: fin.revenue,
-      expenses: fin.expenses,
-      cashPosition: fin.cashPosition,
-      pendingInvoices: fin.invoices.pending.length,
-      overdueInvoices: fin.invoices.overdue.length,
-      budgets,
+    // Core calculations
+    const revenue = fin.revenue.total;
+    const expenses = fin.expenses.total;
+    const profit = revenue - expenses;
+    const cashPosition = fin.cashPosition;
+    const profitMargin = revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : '0.0';
+
+    // Invoice summary
+    const pendingCount = fin.invoices.pending.length;
+    const overdueCount = fin.invoices.overdue.length;
+    const pendingValue = fin.invoices.pending.reduce((sum, inv) => sum + inv.amount, 0);
+    const overdueValue = fin.invoices.overdue.reduce((sum, inv) => sum + inv.amount, 0);
+
+    // Budget health
+    const budgetLines = budgets.map(b => {
+      const pct = b.allocated > 0 ? Math.round((b.spent / b.allocated) * 100) : 0;
+      const flag = b.overrun ? ' [OVERRUN]' : (pct >= 80 ? ' [WARNING]' : '');
+      return `  ${b.department}: £${b.spent.toLocaleString()} / £${b.allocated.toLocaleString()} (${pct}%)${flag}`;
+    });
+
+    // Top clients by revenue
+    const topClients = Object.entries(fin.revenue.byClient)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([client, amount]) => `  ${client}: £${amount.toLocaleString()}`);
+
+    // Top expense categories
+    const topExpenses = Object.entries(fin.expenses.byCategory)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([cat, amount]) => `  ${cat}: £${amount.toLocaleString()}`);
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    const summary = [
+      `DAILY FINANCIAL SNAPSHOT — ${dateStr}`,
+      `${'─'.repeat(50)}`,
+      ``,
+      `Cash Position: £${cashPosition.toLocaleString()}`,
+      `Revenue:       £${revenue.toLocaleString()}`,
+      `Expenses:      £${expenses.toLocaleString()}`,
+      `Net Profit:    £${profit.toLocaleString()} (${profitMargin}% margin)`,
+      ``,
+      `INVOICES`,
+      `  Pending: ${pendingCount} (£${pendingValue.toLocaleString()})`,
+      `  Overdue: ${overdueCount} (£${overdueValue.toLocaleString()})`,
+    ];
+
+    if (budgetLines.length > 0) {
+      summary.push(``, `BUDGET UTILISATION`, ...budgetLines);
+    }
+
+    if (topClients.length > 0) {
+      summary.push(``, `TOP CLIENTS (Revenue)`, ...topClients);
+    }
+
+    if (topExpenses.length > 0) {
+      summary.push(``, `TOP EXPENSE CATEGORIES`, ...topExpenses);
+    }
+
+    // Flags / action items
+    const flags = [];
+    if (overdueCount > 0) flags.push(`${overdueCount} overdue invoice(s) totalling £${overdueValue.toLocaleString()} — chase immediately`);
+    if (budgets.some(b => b.overrun)) flags.push(`Budget overrun detected — review spend with Nikita`);
+    if (cashPosition < 0) flags.push(`Negative cash position — escalate to Nikita`);
+    if (profit < 0) flags.push(`Operating at a loss — review cost structure`);
+
+    if (flags.length > 0) {
+      summary.push(``, `ACTION ITEMS`, ...flags.map(f => `  ⚠ ${f}`));
+    } else {
+      summary.push(``, `STATUS: All clear — financials healthy`);
+    }
+
+    summary.push(``, `— Marcus, CFO`);
+
+    const report = summary.join('\n');
+
+    // Log and persist
+    logger.log(AGENT_ID, 'DAILY_SNAPSHOT_GENERATED', {
+      revenue, expenses, profit, cashPosition, pendingCount, overdueCount,
+      flagCount: flags.length,
+    });
+
+    memory.set('cfo:lastSnapshot', {
+      generatedAt: now.toISOString(),
+      revenue, expenses, profit, cashPosition,
+      pendingInvoices: pendingCount,
+      overdueInvoices: overdueCount,
+      report,
     });
 
     this.sendReportToNikita('daily-financial-snapshot', report);
