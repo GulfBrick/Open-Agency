@@ -10,6 +10,7 @@ import express from 'express';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 import { logger } from '../core/logger.js';
 import { memory } from '../core/memory.js';
 import { agentRegistry } from '../core/agent-registry.js';
@@ -28,6 +29,68 @@ const PORT = 3001;
 function createDashboardServer() {
   const app = express();
   app.use(express.json());
+  app.use('/assets', express.static(join(__dirname, 'assets')));
+
+  // ─── API Key Authentication Middleware ──────────────────────
+  //
+  // Protects all /api/* routes except explicitly exempted ones.
+  // Checks X-API-Key header against OPEN_AGENCY_API_KEY env var.
+
+  const EXEMPT_ROUTES = new Set(['/api/health', '/api/config/public']);
+
+  function apiKeyAuth(req, res, next) {
+    // Only apply to /api/* routes
+    if (!req.path.startsWith('/api/')) return next();
+
+    // Exempt specific public endpoints
+    if (EXEMPT_ROUTES.has(req.path)) return next();
+
+    const apiKey = process.env.OPEN_AGENCY_API_KEY;
+    const provided = req.headers['x-api-key'];
+
+    if (!apiKey) {
+      // No key configured — allow all (local dev mode)
+      return next();
+    }
+
+    if (!provided) {
+      logger.log('dashboard', 'AUTH_FAILED', { reason: 'missing_key', ip: req.ip, path: req.path });
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const providedBuf = Buffer.from(provided);
+    const expectedBuf = Buffer.from(apiKey);
+    if (providedBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(providedBuf, expectedBuf)) {
+      logger.log('dashboard', 'AUTH_FAILED', { reason: 'invalid_key', ip: req.ip, path: req.path });
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    next();
+  }
+
+  app.use(apiKeyAuth);
+
+  // ─── API: Health Check (no auth) ───────────────────────────
+
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'ok',
+      agency: 'Open Agency',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // ─── API: Public Config (no auth) ─────────────────────────
+  //
+  // Returns the API key so the local dashboard HTML can
+  // attach it to fetch() calls. In production, the Next.js
+  // web app holds its own key server-side — this is for the
+  // local dashboard only.
+
+  app.get('/api/config/public', (req, res) => {
+    res.json({ apiKey: process.env.OPEN_AGENCY_API_KEY || null });
+  });
 
   // ─── Serve Dashboard HTML ──────────────────────────────────
 

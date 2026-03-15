@@ -337,19 +337,15 @@
     .logo {
       width: 38px;
       height: 38px;
-      background: linear-gradient(135deg, #7C3AED, #A78BFA, #7C3AED);
-      background-size: 200% 200%;
-      animation: logoShift 6s ease-in-out infinite;
       border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--heading);
-      font-weight: 800;
-      font-size: 15px;
-      color: #fff;
-      letter-spacing: -0.5px;
-      box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     @keyframes logoShift {
@@ -2233,7 +2229,7 @@
   <!-- Header -->
   <header class="header">
     <div class="header-left">
-      <div class="logo">OA</div>
+      <div class="logo"><img src="/assets/logo.png" alt="Open Agency" /></div>
       <div class="header-brand">
         <div class="header-title">Open Agency</div>
         <div class="header-tagline">Intelligence at work</div>
@@ -2576,6 +2572,25 @@
     const API = '';
     let refreshTimer = null;
     let hasAnimated = false;
+    let _apiKey = null;
+
+    // Fetch API key from public config endpoint (no auth required)
+    async function loadApiKey() {
+      try {
+        const res = await fetch(`${API}/api/config/public`);
+        const cfg = await res.json();
+        _apiKey = cfg.apiKey || null;
+      } catch (err) {
+        console.warn('[Auth] Could not load API key:', err.message);
+      }
+    }
+
+    // Wrapper: build headers object with API key for /api/* calls
+    function authHeaders(extra = {}) {
+      const headers = { ...extra };
+      if (_apiKey) headers['X-API-Key'] = _apiKey;
+      return headers;
+    }
 
     // No fake messages — bubbles show real log data or honest idle status
 
@@ -2772,7 +2787,7 @@
     // ─── Fetch & Render ─────────────────────────────────
     async function fetchStatus() {
       try {
-        const res = await fetch(`${API}/api/status`);
+        const res = await fetch(`${API}/api/status`, { headers: authHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         renderAll(data);
@@ -2955,7 +2970,7 @@
     // ─── Live Task Queue ─────────────────────────────────
     async function fetchTasks() {
       try {
-        const res = await fetch(`${API}/api/tasks`);
+        const res = await fetch(`${API}/api/tasks`, { headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         renderTasks(data);
@@ -3011,7 +3026,7 @@
     // ─── Workflows ───────────────────────────────────────
     async function fetchWorkflows() {
       try {
-        const res = await fetch(`${API}/api/workflows`);
+        const res = await fetch(`${API}/api/workflows`, { headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         renderWorkflows(data);
@@ -3065,7 +3080,7 @@
 
     async function approveWorkflow(workflowId) {
       try {
-        const res = await fetch(`${API}/api/workflows/${workflowId}/approve`, { method: 'POST' });
+        const res = await fetch(`${API}/api/workflows/${workflowId}/approve`, { method: 'POST', headers: authHeaders() });
         if (res.ok) {
           showToast('Workflow approved');
           fetchWorkflows();
@@ -3236,7 +3251,7 @@
     // ─── Schedules ──────────────────────────────────────
     async function fetchSchedules() {
       try {
-        const res = await fetch(`${API}/api/schedules`);
+        const res = await fetch(`${API}/api/schedules`, { headers: authHeaders() });
         if (!res.ok) return;
         const schedules = await res.json();
         renderSchedules(schedules);
@@ -3280,7 +3295,7 @@
       btn.textContent = '...';
 
       try {
-        const res = await fetch(`${API}/api/schedules/${encodeURIComponent(name)}/run`, { method: 'POST' });
+        const res = await fetch(`${API}/api/schedules/${encodeURIComponent(name)}/run`, { method: 'POST', headers: authHeaders() });
         const data = await res.json();
 
         if (data.success) {
@@ -3341,6 +3356,7 @@
     // ─── Init ───────────────────────────────────────────
     async function init() {
       initParticles();
+      await loadApiKey();
       await Promise.all([fetchStatus(), fetchSchedules(), fetchTasks(), fetchWorkflows()]);
       dismissLoadingOverlay();
       // Refresh every 10 seconds
@@ -3415,7 +3431,7 @@
       try {
         const res = await fetch(`${API}/api/nikita/message`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ message: text }),
         });
         const data = await res.json();
@@ -3450,7 +3466,7 @@
     async function speakNikita(text) {
       try {
         if (_elevenlabsKey === null) {
-          const cfgRes = await fetch(`${API}/api/config/elevenlabs`);
+          const cfgRes = await fetch(`${API}/api/config/elevenlabs`, { headers: authHeaders() });
           const cfg = await cfgRes.json();
           _elevenlabsKey = cfg.apiKey || '';
         }
@@ -3492,7 +3508,7 @@
     // ─── Load Chat History ───────────────────────────────
     async function loadChatHistory() {
       try {
-        const res = await fetch(`${API}/api/nikita/history`);
+        const res = await fetch(`${API}/api/nikita/history`, { headers: authHeaders() });
         const history = await res.json();
         if (Array.isArray(history) && history.length > 0) {
           for (const msg of history) {
