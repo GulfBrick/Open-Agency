@@ -1,0 +1,64 @@
+Read all existing files in src/nikita/brain.js, src/core/, and the agents/nikita/ workspace files.
+
+You are wiring Nikita's agency brain to her Telegram bot so she can:
+A) Proactively send Harry messages when something happens
+B) Be aware of agency state when Harry talks to her on Telegram
+
+## PART A: Telegram Notifier (src/core/telegram-notifier.js)
+
+Create src/core/telegram-notifier.js:
+- Uses the Telegram Bot API directly (no external library needed — just fetch)
+- Bot token from process.env.NIKITA_TELEGRAM_TOKEN
+- Harry's Telegram user ID from process.env.HARRY_TELEGRAM_ID
+- Methods:
+  - sendMessage(text) — sends a text message to Harry
+  - sendAlert(title, body) — formats and sends an alert message
+  - notifyTaskCreated(task) — "📋 New task assigned to [agent]: [description]"
+  - notifyEscalation(reason, context) — "🚨 Escalation needed: [reason]"
+  - notifyPromotion(agentId, newRank) — "🎉 [Agent] just earned a promotion to [rank]!"
+  - notifyBriefing(briefingText) — sends the morning briefing
+  - Singleton export
+
+## PART B: Update src/nikita/brain.js
+
+Update NikitaBrain to:
+1. Import telegramNotifier
+2. After processMessage() makes a decision, call telegramNotifier to notify Harry:
+   - If action = 'escalate' → notifyEscalation()
+   - If tasks created → notifyTaskCreated() for each task
+   - If action = 'respond' → send response to Harry via Telegram too
+3. After generateBriefing() → call notifyBriefing() to send it to Harry on Telegram
+4. Add method: sendToHarry(text) — direct message to Harry via Telegram
+
+## PART C: Update agents/nikita/CLAUDE.md
+
+Update Nikita's OpenClaw session instructions to make her agency-aware.
+She should read agency state files when chatting with Harry so she knows what's happening.
+
+Append to agents/nikita/CLAUDE.md:
+- On session startup, read these files to get agency context:
+  - C:\Users\danie\Documents\OpenClaw Agency\data\state.json
+  - C:\Users\danie\Documents\OpenClaw Agency\logs\agent-actions.jsonl (last 20 lines)
+  - C:\Users\danie\Documents\OpenClaw Agency\data\business-knowledge\clearline-markets\overview.md
+- When Harry asks about the agency, agents, tasks, or clients — use this data to answer
+- She IS the CEO — she knows what's happening because she reads the live files
+- She can trigger agency tasks by appending to the task queue file:
+  C:\Users\danie\Documents\OpenClaw Agency\data\state.json
+- Always sign off messages with what action she's taking next
+
+## PART D: .env updates
+
+Add to .env:
+NIKITA_TELEGRAM_TOKEN=8787932103:AAGNQ7uuxL0zjy37EUSnOlA_duDuqFAgQTQ
+HARRY_TELEGRAM_ID=6126608328
+
+Add to .env.example:
+NIKITA_TELEGRAM_TOKEN=nikita_bot_token_here
+HARRY_TELEGRAM_ID=your_telegram_user_id
+
+## PART E: Send intro message
+
+After wiring everything up, update scripts/brief-nikita.mjs to also trigger a Telegram message to Harry saying:
+"Right then. The backend's live, I'm wired in, and everything runs through me now. You'll hear from me when it matters — decisions, escalations, promotions, morning briefings. Nothing moves without my sign-off. Let's get to work."
+
+Node.js ESM. Clean and well commented.

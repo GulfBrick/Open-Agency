@@ -35,49 +35,21 @@ import { copywriterBrain } from './agents/creative/copywriter-brain.js';
 import { brandVault } from './core/brand-vault.js';
 import { contentCalendar } from './core/content-calendar.js';
 import { scheduler } from './core/scheduler.js';
+import { telegramNotifier } from './core/telegram-notifier.js';
+import { nikitaGateway } from './core/nikita-gateway.js';
+import { taskExecutor } from './core/task-executor.js';
 import { createDashboardServer } from './dashboard/server.js';
+import { agentPersonas } from './core/agent-personas.js';
+import { agentConversation } from './core/agent-conversation.js';
+import { workflowEngine } from './core/workflow-engine.js';
 
 const AGENT_ID = 'nikita';
 
 /**
- * Initialise Nikita's message handler.
+ * Initialise Nikita via her gateway — she subscribes to the bus and starts listening.
  */
 function initNikita() {
-  messageBus.subscribe(AGENT_ID, async (message) => {
-    logger.log(AGENT_ID, 'MESSAGE_RECEIVED', {
-      from: message.from,
-      type: message.type,
-      messageId: message.id,
-    });
-
-    try {
-      const decision = await nikitaBrain.processMessage(message);
-
-      // If escalation needed, flag it
-      if (decision.escalate) {
-        logger.log(AGENT_ID, 'ESCALATION_FLAGGED', {
-          reason: decision.escalationReason,
-          messageId: message.id,
-        });
-      }
-
-      // Send response back if there's a reply
-      if (decision.response && message.from !== AGENT_ID) {
-        messageBus.send({
-          from: AGENT_ID,
-          to: message.from,
-          type: MESSAGE_TYPES.REPORT,
-          priority: message.priority,
-          payload: { response: decision.response },
-        });
-      }
-    } catch (err) {
-      logger.log(AGENT_ID, 'ERROR', {
-        error: err.message,
-        messageId: message.id,
-      });
-    }
-  });
+  nikitaGateway.start();
 }
 
 /**
@@ -161,12 +133,18 @@ function printStartupSummary(bootCount, cfoEvaluation, csuiteAgents = {}) {
   console.log(`  Business Knowledge .. OK  (${clients.length} client${clients.length !== 1 ? 's' : ''})`);
   console.log(`  Skill Teacher ....... OK`);
   console.log(`  Nikita Brain ........ OK`);
+  console.log(`  Nikita Gateway ...... OK  (listening)`);
+  console.log(`  Task Executor ....... OK  (polling 30s)`);
   console.log(`  C-Suite Agents ...... OK  (${csuiteCount}/3 loaded)`);
   console.log(`  Brand Vault ......... OK`);
   console.log(`  Content Calendar .... OK`);
   console.log(`  Scheduler ........... OK  (${scheduler.listSchedules().length} schedules)`);
+  console.log(`  Telegram ............ ${telegramNotifier.enabled ? 'OK' : 'OFF'}  (${telegramNotifier.enabled ? 'connected' : 'no token'})`);
   console.log(`  Dashboard ........... OK  (port 3001)`);
   console.log(`  Agent Registry ...... OK  (${agentRegistry.list().length} registered)`);
+  console.log(`  Agent Personas ...... OK  (${agentPersonas.listAgentIds().length} personas)`);
+  console.log(`  Conversations ....... OK`);
+  console.log(`  Workflow Engine ..... OK  (${workflowEngine.listTemplates().length} templates)`);
   console.log('----------------------------------------');
   console.log('  C-Suite:');
   const csuiteNames = { cfo: 'Marcus (CFO)', cto: 'Zara (CTO)', cmo: 'Priya (CMO)' };
@@ -321,6 +299,10 @@ async function boot() {
   initAgents();
   const cfoEvaluation = simulateCfoTask();
 
+  // Start the task executor — polls the queue and runs tasks through agents
+  taskExecutor.start();
+  logger.log('system', 'TASK_EXECUTOR_STARTED', { pollInterval: '30s' });
+
   // Start the scheduler
   scheduler.start();
   logger.log('system', 'SCHEDULER_STARTED', { schedules: scheduler.listSchedules().length });
@@ -336,6 +318,10 @@ async function boot() {
   console.log(`  Nikita is online. Boot #${bootCount}.`);
   console.log('  Waiting for messages...');
   console.log('');
+
+  // Notify Harry on Telegram that the agency is online
+  const totalAgents = agentRegistry.list().length;
+  telegramNotifier.notifyBoot(bootCount, totalAgents);
 
   // Generate a briefing if API key is available
   if (process.env.ANTHROPIC_API_KEY) {
@@ -365,11 +351,17 @@ export {
   promotion,
   businessKnowledge,
   agentRegistry,
+  nikitaGateway,
+  taskExecutor,
   devLeadBrain, architectBrain, frontendBrain, backendBrain, fullstackBrain,
   qa, codeReviewer,
   sprintManager,
   salesLeadBrain, closerBrain, leadQualifierBrain, followUpBrain, proposalBrain,
   scheduler,
+  telegramNotifier,
+  agentPersonas,
+  agentConversation,
+  workflowEngine,
 };
 
 // Boot

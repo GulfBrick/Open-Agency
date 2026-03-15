@@ -1,0 +1,58 @@
+Read src/index.js, src/nikita/brain.js, src/core/telegram-notifier.js, and src/core/agent-registry.js.
+
+You need to wire Nikita fully INTO the server so she is the central intelligence that actually runs things.
+
+## PART 1: src/core/nikita-gateway.js
+
+Create a NikitaGateway that connects Nikita's brain to:
+1. The message bus (she subscribes and receives all ESCALATION and REPORT messages)
+2. The agent registry (she can dispatch tasks to any agent)
+3. The Telegram notifier (she sends Harry messages)
+4. The task queue (she can create and monitor tasks)
+
+Methods:
+- start() — subscribes Nikita to the message bus, starts listening
+- handleIncomingMessage(message) — routes message to nikitaBrain.processMessage(), then acts on the decision:
+  - If decision.tasks — create them in task queue AND dispatch to agent registry
+  - If decision.escalate — call telegramNotifier.notifyEscalation()
+  - If decision.response — send response to Harry via telegramNotifier.sendMessage()
+- receiveFromHarry(text) — processes a message FROM Harry (called when Harry DMs the backend)
+- dispatchToAgent(agentId, method, args, clientId) — calls the agent via registry, records experience
+- broadcastStatus() — sends Harry a status update via Telegram
+- Export singleton: nikitaGateway
+
+## PART 2: src/core/task-executor.js
+
+Create a TaskExecutor that actually runs tasks in the queue:
+- Polls task queue every 30 seconds for PENDING tasks
+- For each pending task:
+  1. Gets the assigned agent from registry
+  2. Calls the right method on the agent based on task.type
+  3. Updates task status to IN_PROGRESS, then DONE/FAILED
+  4. Records result in experience tracker
+  5. Notifies Nikita via message bus when done
+- Methods:
+  - start() — begins polling loop
+  - stop() — clears interval
+  - executeTask(task) — runs a single task
+  - Export singleton: taskExecutor
+
+## PART 3: Update src/index.js
+
+After all agents are registered:
+1. Import nikitaGateway and taskExecutor
+2. Call nikitaGateway.start() — Nikita starts listening on the message bus
+3. Call taskExecutor.start() — task executor begins processing queue
+4. Update startup log to show: "Nikita Gateway: ACTIVE" and "Task Executor: ACTIVE"
+5. When the backend starts, send Harry a Telegram message via nikitaGateway:
+   "Agency backend is live. I'm running inside the server now — connected to all 21 agents, the task queue, and the message bus. Send me tasks directly here or via Telegram."
+
+## PART 4: Update src/dashboard/server.js
+
+Add POST /api/message endpoint:
+- Accepts { from: 'harry', text: '...' }
+- Calls nikitaGateway.receiveFromHarry(text)
+- Returns Nikita's response
+This lets Harry send messages to Nikita from the dashboard too.
+
+Node.js ESM. Clean and well commented. Import dotenv/config at the top of any file that needs env vars.

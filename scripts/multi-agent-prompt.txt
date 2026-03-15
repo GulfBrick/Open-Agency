@@ -1,0 +1,136 @@
+Read ALL existing files in src/. You are building the core multi-agent conversation protocol for Open Agency.
+
+## THE PROBLEM
+Right now Nikita just calls the Anthropic API directly for everything. The other agents (Nova, Sage, Luna, Marcus, etc.) aren't actually working — they're just names. We need real autonomous agent-to-agent communication where each agent has their OWN personality, context, and responds in character.
+
+## WHAT TO BUILD
+
+### 1. src/core/agent-conversation.js — Agent Conversation Engine
+
+This is the heart of multi-agent collaboration.
+
+Each agent gets their OWN system prompt based on their SOUL.md persona file.
+When Agent A needs to talk to Agent B, it creates a "conversation" where B actually responds IN CHARACTER using their own system prompt.
+
+```
+AgentConversation:
+- conversationId
+- participants: [agentId, agentId, ...]
+- messages: [{ from, to, content, timestamp }]
+- topic
+- status: OPEN | WAITING_ON | RESOLVED
+- clientId (optional)
+- outcome (final decision/result)
+```
+
+Methods:
+- createConversation(topic, initiator, participants, clientId) — starts a convo
+- sendMessage(conversationId, fromAgentId, toAgentId, content) — one agent talks to another. ACTUALLY calls the recipient agent's brain with their own system prompt so they respond in character
+- getConversation(conversationId) — full thread
+- resolveConversation(conversationId, outcome) — marks done, logs outcome
+- Persists to data/conversations/[conversationId].json
+- Fires message bus events: CONVERSATION_MESSAGE, CONVERSATION_RESOLVED
+
+### 2. src/core/agent-personas.js — Persona Loader
+
+Loads each agent's persona from their SOUL.md files so they can respond in character.
+
+Map of agentId → system prompt built from their SOUL.md:
+- nikita → agents/nikita/SOUL.md
+- cfo (Marcus) → agents/cfo/SOUL.md  
+- cto (Zara) → agents/cto/SOUL.md
+- cmo (Priya) → agents/cmo/SOUL.md
+- dev-lead (Kai) → agents/dev-team/lead/SOUL.md
+- architect (Sage) → agents/dev-team/architect/SOUL.md
+- frontend (Luna) → agents/dev-team/frontend/SOUL.md
+- backend (Rex) → agents/dev-team/backend/SOUL.md
+- fullstack (Avery) → agents/dev-team/fullstack/SOUL.md
+- qa (Quinn) → agents/dev-team/qa/SOUL.md
+- code-review (Atlas) → agents/dev-team/code-review/SOUL.md
+- sales-lead (Jordan) → agents/sales/lead/SOUL.md
+- closer (Zoe) → agents/sales/closer/SOUL.md
+- lead-qualifier (Sam) → agents/sales/lead-qualifier/SOUL.md
+- follow-up (Maya) → agents/sales/follow-up/SOUL.md
+- proposal (Leo) → agents/sales/proposal/SOUL.md
+- creative-director (Nova) → agents/creative/director/SOUL.md
+- designer (Iris) → agents/creative/designer/SOUL.md
+- video-editor (Finn) → agents/creative/video/SOUL.md
+- social-media (Jade) → agents/creative/social/SOUL.md
+- copywriter (Ash) → agents/creative/copywriter/SOUL.md
+
+Method: getSystemPrompt(agentId) — returns the full system prompt for that agent
+Method: getAgentName(agentId) — returns their human name (Nova, Sage, Luna, etc.)
+Singleton export.
+
+### 3. src/core/workflow-engine.js — Workflow Engine
+
+Orchestrates multi-step agent workflows. A workflow is a series of agent conversations that happen in sequence or parallel.
+
+```
+Workflow:
+- workflowId
+- name
+- clientId
+- steps: [{ stepId, type, agents, dependsOn, status, output }]
+- status: PENDING | RUNNING | WAITING_APPROVAL | DONE | FAILED
+- createdBy (agentId or 'harry')
+- approvalRequired: boolean
+- approvedBy (agentId or 'harry')
+```
+
+Built-in workflow templates:
+
+DASHBOARD_REDESIGN workflow:
+Step 1: Nova (creative-director) + Sage (architect) have a conversation about the dashboard redesign brief. Nova comes up with creative direction. Sage assesses technical feasibility. They come to an agreement.
+Step 2: Nova and Sage bring their joint proposal to Nikita — she reviews it and decides whether to escalate to Harry for approval.
+Step 3: [REQUIRES HARRY APPROVAL] Nikita presents the proposal to Harry and waits.
+Step 4: Once approved, Nikita briefs Kai (dev-lead) to run the sprint. Kai assigns Luna (frontend) to build it.
+Step 5: Luna builds. Atlas (code-review) reviews. Kai reports completion to Nikita.
+Step 6: Nikita notifies Harry the job is done.
+
+Methods:
+- createWorkflow(template, clientId, brief) — creates a workflow from a template
+- runWorkflow(workflowId) — executes steps in order, waits on dependencies
+- approveWorkflow(workflowId, approvedBy) — Harry or Nikita approves a step
+- getWorkflowStatus(workflowId) — full status with step details
+- listWorkflows(clientId) — all workflows for a client
+- Persists to data/workflows/[workflowId].json
+
+### 4. Update src/core/nikita-gateway.js
+
+When Nikita receives a task that involves multiple agents:
+- Instead of doing it herself, she creates a WORKFLOW
+- She picks the right workflow template based on the task type
+- She starts the workflow running
+- She notifies Harry what workflow was started and who is involved
+- When workflow needs Harry approval, she sends him a Telegram message with the proposal and asks for go/no-go
+- When workflow completes, she notifies Harry with the outcome
+
+Add method: startWorkflow(taskDescription, clientId) — determines which workflow template to use based on the task, creates and starts it, notifies Harry
+
+### 5. Update src/nikita/brain.js
+
+When processMessage() is called and action = 'delegate':
+- Call nikitaGateway.startWorkflow() instead of just creating a task
+- The workflow handles all the agent-to-agent conversation
+
+### 6. scripts/test-workflow.mjs — Test script
+
+Create a test that:
+1. Sends Nikita the dashboard redesign brief
+2. She starts the DASHBOARD_REDESIGN workflow
+3. Nova and Sage have an actual conversation (each responding in character via their SOUL.md personas)
+4. The conversation output is logged
+5. The joint proposal is sent to Harry on Telegram
+
+## IMPORTANT RULES
+- Every agent responds using their OWN persona from SOUL.md — they are NOT interchangeable
+- Agent names must be used: "Nova says...", "Sage responds...", NOT "the creative director says..."
+- Conversations are real — each agent calls the Anthropic API with their own system prompt
+- Use claude-sonnet-4-5 for all worker agents (not opus — too expensive for multi-agent chains)
+- Every conversation is logged to data/conversations/
+- Every workflow is persisted to data/workflows/
+- Load dotenv/config in every file that needs env vars
+- Node.js ESM throughout
+
+This is the most important file in the whole project. Build it carefully.

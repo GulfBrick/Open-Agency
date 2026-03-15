@@ -8,6 +8,7 @@ import { logger } from '../core/logger.js';
 import { memory } from '../core/memory.js';
 import { taskQueue, TASK_STATUS } from '../core/task-queue.js';
 import { messageBus, MESSAGE_TYPES } from '../core/message-bus.js';
+import { telegramNotifier } from '../core/telegram-notifier.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, '..', '..');
@@ -94,16 +95,25 @@ class NikitaBrain {
       taskCount: decision.tasks?.length || 0,
     });
 
+    // Notify Harry on escalation
+    if (decision.escalate) {
+      telegramNotifier.notifyEscalation(
+        decision.escalationReason || 'Nikita flagged this for your review',
+        { from: message.from, messageId: message.id },
+      );
+    }
+
     // Execute tasks if any
     if (decision.tasks?.length > 0) {
       for (const task of decision.tasks) {
-        taskQueue.enqueue({
+        const created = taskQueue.enqueue({
           assignedTo: task.assignTo,
           createdBy: AGENT_ID,
           type: message.type,
           priority: task.priority || 'MEDIUM',
           description: task.description,
         });
+        telegramNotifier.notifyTaskCreated(created);
       }
     }
 
@@ -166,6 +176,9 @@ class NikitaBrain {
       text: briefing,
       generatedAt: new Date().toISOString(),
     });
+
+    // Push briefing to Harry's Telegram
+    telegramNotifier.notifyBriefing(briefing);
 
     return briefing;
   }
