@@ -42,6 +42,7 @@ import { createDashboardServer } from './dashboard/server.js';
 import { agentPersonas } from './core/agent-personas.js';
 import { agentConversation } from './core/agent-conversation.js';
 import { workflowEngine } from './core/workflow-engine.js';
+import { clientOnboarding } from './core/client-onboarding.js';
 
 const AGENT_ID = 'nikita';
 
@@ -99,6 +100,7 @@ function printStartupSummary(bootCount, csuiteAgents = {}) {
   console.log(`  Agent Personas ...... OK  (${agentPersonas.listAgentIds().length} personas)`);
   console.log(`  Conversations ....... OK`);
   console.log(`  Workflow Engine ..... OK  (${workflowEngine.listTemplates().length} templates)`);
+  console.log(`  Client Onboarding .. OK`);
   console.log('----------------------------------------');
   console.log('  C-Suite:');
   const csuiteNames = { cfo: 'Marcus (CFO)', cto: 'Zara (CTO)', cmo: 'Priya (CMO)' };
@@ -309,6 +311,7 @@ export {
   agentPersonas,
   agentConversation,
   workflowEngine,
+  clientOnboarding,
 };
 
 // Boot

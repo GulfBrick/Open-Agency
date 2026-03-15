@@ -18,6 +18,7 @@ import { experience } from '../core/experience.js';
 import { businessKnowledge } from '../core/business-knowledge.js';
 import { taskQueue } from '../core/task-queue.js';
 import { scheduler } from '../core/scheduler.js';
+import { mountOnboardingRoutes } from '../core/client-onboarding-api.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = 3001;
@@ -139,6 +140,9 @@ function createDashboardServer() {
       res.status(500).json({ success: false, error: err.message });
     }
   });
+
+  // ─── Client Onboarding Routes ────────────────────────────
+  mountOnboardingRoutes(app);
 
   // ─── Data Assembly Helpers ─────────────────────────────────
 

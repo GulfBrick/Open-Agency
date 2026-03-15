@@ -1913,112 +1913,7 @@
     let refreshTimer = null;
     let hasAnimated = false;
 
-    // ─── Personality-Driven Bubble Messages ──────────────
-    const AGENT_MESSAGES = {
-      'cfo': [
-        'Reviewing Q1 projections...', 'Cash flow looking healthy', 'Running expense analysis...',
-        'Profit margins on track', 'Flagging an invoice for review...', 'Budget variance within 2%',
-        'Preparing financial summary...', 'Reconciling accounts'
-      ],
-      'cto': [
-        'Infrastructure running clean', 'Reviewing security protocols...', 'Tech debt log updated',
-        'API response times nominal...', 'Deploying latest build...', 'Monitoring uptime metrics...',
-        'Scaling architecture review...', 'SSL certs all current'
-      ],
-      'cmo': [
-        'Planning content calendar', 'Analysing campaign metrics...', 'Brand guidelines updated',
-        'Social strategy in review...', 'Competitor analysis running...', 'Engagement up 12% this week',
-        'Reviewing SEO performance...', 'Marketing funnel optimised'
-      ],
-      'dev-lead': [
-        'Sprint velocity looking good', 'Code review queue: 2 pending', 'Assigning tasks to the team...',
-        'Standup notes compiled', 'Backlog grooming in progress...', 'Merging feature branches...',
-        'Sprint retro scheduled', 'Unblocking the frontend team...'
-      ],
-      'creative-director': [
-        'Reviewing brand assets', 'Creative brief approved', 'Quality check on designs...',
-        'Briefing Iris on new project...', 'Campaign concept approved', 'Mood board in progress...',
-        'Art direction finalised', 'Client presentation ready...'
-      ],
-      'designer': [
-        'Iterating on homepage layout...', 'Colour palette locked', 'Exporting assets for dev...',
-        'Wireframes approved', 'Design system updated...', 'Responsive mockups in Figma...',
-        'Typography choices refined', 'Icon set refreshed...'
-      ],
-      'video-editor': [
-        'Rendering hero video...', 'Colour grading pass 2...', 'Audio sync complete',
-        'Adding motion graphics...', 'Final cut under review...', 'Trimming B-roll footage...',
-        'Exporting for social', 'Transitions looking clean...'
-      ],
-      'social-media': [
-        'Scheduling next week posts', 'Engagement rate up 8%!', 'Replying to comments...',
-        'Hashtag strategy updated', 'Story content drafted...', 'Analytics report compiled',
-        'Trending topics scanned...', 'Community management on'
-      ],
-      'copywriter': [
-        'Drafting landing page copy', 'Headlines A/B tested...', 'Email sequence written',
-        'Blog post in review...', 'CTA copy optimised...', 'Brand voice guide followed',
-        'Proofreading final draft...', 'Microcopy for onboarding done...'
-      ],
-      'sales-lead': [
-        'Pipeline review at 3pm', 'New lead scored: 85/100', 'CRM updated with notes...',
-        'Team targets on track', 'Coaching session with closer...', 'Forecasting Q2 numbers...',
-        'Deal flow looking strong', 'Qualifying a warm referral...'
-      ],
-      'closer': [
-        'Closing call in 15 mins', 'Contract sent for signature...', 'Deal closed!',
-        'Negotiating terms...', 'Following up on proposal...', 'Objection handling prep...',
-        'Demo scheduled for Friday', 'Upsell opportunity spotted...'
-      ],
-      'lead-qualifier': [
-        'Scoring inbound leads...', '3 leads qualified today', 'Budget confirmed on prospect...',
-        'Lead enrichment running...', 'ICP match: 92%', 'Routing hot lead to closer...',
-        'Discovery call notes added...', 'Disqualified 2 low-fit leads...'
-      ],
-      'follow-up': [
-        'Nurture sequence: day 3', 'Re-engagement email sent...', 'Warm lead re-activated',
-        'Follow-up call scheduled...', 'Checking in with prospects...', 'Drip campaign performing well...',
-        'Personalised outreach sent', 'Response rate tracking...'
-      ],
-      'proposal': [
-        'Drafting proposal for Acme...', 'Pricing model updated', 'Case study attached',
-        'Proposal template refined...', 'Scope document finalised...', 'ROI projections calculated...',
-        'Custom deck built', 'Terms and conditions reviewed...'
-      ],
-      'architect': [
-        'System diagram updated', 'Microservices topology clean', 'Database schema reviewed',
-        'Evaluating cache strategy...', 'API contracts defined...', 'Load testing thresholds set...',
-        'Infrastructure as code ready...', 'Scaling plan documented'
-      ],
-      'frontend': [
-        'Component library updated', 'Responsive layout tested', 'Accessibility audit: pass',
-        'Animation performance tuned...', 'Dark mode polished...', 'Bundle size reduced 12%...',
-        'Storybook stories added...', 'Cross-browser testing done'
-      ],
-      'backend': [
-        'API endpoint deployed', 'Database migrations done', 'Rate limiting configured',
-        'Caching layer optimised...', 'WebSocket handler tested...', 'Error handling improved...',
-        'Auth middleware updated', 'Query performance tuned...'
-      ],
-      'fullstack': [
-        'Feature branch merged', 'End-to-end flow working', 'Integration tests green',
-        'Full-stack ticket complete...', 'Docker config updated...', 'Environment vars synced...',
-        'Deployment pipeline clear', 'Code coverage at 87%...'
-      ],
-      'qa': [
-        'Test suite: all green', 'Regression tests passing', 'Edge case found and logged',
-        'Performance benchmarks run...', 'Smoke tests automated...', 'Bug severity assessed...',
-        'Test coverage report ready', 'UAT sign-off pending...'
-      ],
-      'code-review': [
-        'Reviewing PR #42...', 'Code quality: excellent', 'Suggested refactor on utils',
-        'No security issues found', 'Approving merge request...', 'Linting rules enforced...',
-        'Architecture feedback given', 'PR approved and merged...'
-      ],
-    };
-
-    // Track which message index each agent is on
-    const agentMsgIndex = {};
+    // No fake messages — bubbles show real log data or honest idle status
 
     // ─── Agent floor & bubble configuration ────────────────
     const FLOOR_CONFIG = {
@@ -2055,36 +1950,25 @@
     // Currently open popup agent
     let activePopupAgent = null;
 
-    // ─── Bubble Cycling ──────────────────────────────────
-    function getNextBubble(agentId) {
-      const messages = AGENT_MESSAGES[agentId];
-      if (!messages || messages.length === 0) return 'Working...';
-      if (!(agentId in agentMsgIndex)) {
-        agentMsgIndex[agentId] = Math.floor(Math.random() * messages.length);
-      }
-      const msg = messages[agentMsgIndex[agentId]];
-      agentMsgIndex[agentId] = (agentMsgIndex[agentId] + 1) % messages.length;
-      return msg;
+    // ─── Bubble Text ──────────────────────────────────
+    function getBubbleText(agentId) {
+      // Show real log data if available, otherwise honest idle status
+      if (agentBubbles[agentId]) return agentBubbles[agentId];
+      return 'Standing by';
     }
 
-    function cycleBubbles() {
+    function refreshBubbles() {
       const desks = document.querySelectorAll('.agent-desk[data-agent-id]');
       desks.forEach(desk => {
         const agentId = desk.dataset.agentId;
         const bubble = desk.querySelector('.bubble');
         if (!bubble) return;
-
-        // If real data override exists, use it sometimes (50/50)
-        if (agentBubbles[agentId] && Math.random() > 0.5) {
-          bubble.textContent = agentBubbles[agentId];
-        } else {
-          bubble.textContent = getNextBubble(agentId);
-        }
+        bubble.textContent = getBubbleText(agentId);
       });
     }
 
-    // Cycle bubbles every 5 seconds with stagger
-    setInterval(cycleBubbles, 5000);
+    // Refresh bubbles every 10 seconds (synced with API refresh)
+    setInterval(refreshBubbles, 10000);
 
     // ─── Rooftop Particles (stars + floaters) ─────────────
     function initParticles() {
@@ -2132,21 +2016,18 @@
 
       activePopupAgent = agentId;
 
-      const stats = agentStats[agentId] || { tasks: 0, success: 100 };
+      const stats = agentStats[agentId];
       const avatarClass = AVATAR_CLASS[config.floor] || 'default';
       const initials = config.name.split(/[\s()]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      const statusText = agentBubbles[agentId] || 'Standing by';
 
       const popup = document.createElement('div');
       popup.className = 'agent-popup';
       popup.id = 'active-popup';
-      popup.innerHTML = `
-        <div class="popup-header">
-          <div class="popup-avatar ${avatarClass}">${initials}</div>
-          <div>
-            <div class="popup-name">${esc(config.name)}</div>
-            <div class="popup-role">${esc(config.role)}</div>
-          </div>
-        </div>
+
+      let statsHtml = '';
+      if (stats && stats.tasks > 0) {
+        statsHtml = `
         <div class="popup-stats">
           <div class="popup-stat">
             <div class="popup-stat-value color-green">${stats.tasks}</div>
@@ -2156,7 +2037,26 @@
             <div class="popup-stat-value color-violet">${stats.success}%</div>
             <div class="popup-stat-label">Success</div>
           </div>
+        </div>`;
+      } else {
+        statsHtml = `
+        <div class="popup-stats">
+          <div class="popup-stat">
+            <div class="popup-stat-value" style="color: var(--text-dim); font-size: 13px;">${esc(statusText)}</div>
+            <div class="popup-stat-label">Status</div>
+          </div>
+        </div>`;
+      }
+
+      popup.innerHTML = `
+        <div class="popup-header">
+          <div class="popup-avatar ${avatarClass}">${initials}</div>
+          <div>
+            <div class="popup-name">${esc(config.name)}</div>
+            <div class="popup-role">${esc(config.role)}</div>
+          </div>
         </div>
+        ${statsHtml}
         <div class="popup-rank">Rank: <span>${esc(config.rank)}</span></div>
       `;
 
@@ -2308,11 +2208,13 @@
       if (agents) {
         agents.forEach(a => {
           statusMap[a.id] = a.status === 'ONLINE' || a.status === 'ACTIVE';
-          // Populate stats from API data when available
+          // Populate stats from API data only when real data exists
           if (a.id && FLOOR_CONFIG[a.id]) {
-            if (!agentStats[a.id]) agentStats[a.id] = { tasks: 0, success: 100 };
-            if (a.tasksCompleted !== undefined) agentStats[a.id].tasks = a.tasksCompleted;
-            if (a.successRate !== undefined) agentStats[a.id].success = a.successRate;
+            if (a.tasksCompleted !== undefined || a.successRate !== undefined) {
+              if (!agentStats[a.id]) agentStats[a.id] = { tasks: 0, success: 0 };
+              if (a.tasksCompleted !== undefined) agentStats[a.id].tasks = a.tasksCompleted;
+              if (a.successRate !== undefined) agentStats[a.id].success = a.successRate;
+            }
           }
         });
       }
@@ -2320,8 +2222,7 @@
       // Sort agents into floors using config
       for (const [agentId, config] of Object.entries(FLOOR_CONFIG)) {
         const isOnline = statusMap[agentId] || false;
-        // Use real bubble if available, otherwise get cycling personality message
-        const bubbleText = agentBubbles[agentId] || getNextBubble(agentId);
+        const bubbleText = getBubbleText(agentId);
         floors[config.floor].push({
           id: agentId,
           name: config.name,
@@ -2493,9 +2394,9 @@
         if (text) agentBubbles[agentId] = text;
       }
 
-      // Update agent stats from logs
+      // Update agent stats from real log data
       for (const [agentId, count] of Object.entries(taskCountPerAgent)) {
-        if (!agentStats[agentId]) agentStats[agentId] = { tasks: 0, success: 100 };
+        if (!agentStats[agentId]) agentStats[agentId] = { tasks: 0, success: 0 };
         agentStats[agentId].tasks = Math.max(agentStats[agentId].tasks, count);
       }
 
