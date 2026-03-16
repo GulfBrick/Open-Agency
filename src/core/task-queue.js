@@ -126,6 +126,24 @@ class TaskQueue {
   }
 
   /**
+   * Remove all FAILED tasks from the queue.
+   * @returns {number} Number of tasks removed
+   */
+  clearFailed() {
+    let removed = 0;
+    for (const [id, task] of this.tasks) {
+      if (task.status === TASK_STATUS.FAILED) {
+        this.tasks.delete(id);
+        removed++;
+      }
+    }
+    if (removed > 0) {
+      logger.log('task-queue', 'CLEARED_FAILED', { removed });
+    }
+    return removed;
+  }
+
+  /**
    * Get pending tasks sorted by priority.
    * @private
    */

@@ -10,6 +10,7 @@
  */
 
 import { taskQueue, PRIORITY } from './task-queue.js';
+import { agentRegistry } from './agent-registry.js';
 import { logger } from './logger.js';
 
 // ─── Intent → Agent Mapping ──────────────────────────────────
@@ -48,11 +49,6 @@ const INTENT_MAP = [
     agentName: 'Nova (Creative)',
     keywords: ['design', 'creative', 'logo', 'visual', 'copy', 'video', 'branding', 'graphics'],
   },
-  {
-    agentId: 'client-onboarding',
-    agentName: 'Client Onboarding',
-    keywords: ['onboard', 'new client', 'intake', 'welcome pack', 'client setup'],
-  },
 ];
 
 class MessageDispatcher {
@@ -83,10 +79,33 @@ class MessageDispatcher {
       };
     }
 
+    // Filter out any agents not actually registered
+    const registeredIds = new Set(agentRegistry.list());
+    const valid = matched.filter(intent => {
+      if (!registeredIds.has(intent.agentId)) {
+        logger.log('dispatcher', 'AGENT_NOT_REGISTERED', {
+          agentId: intent.agentId,
+          agentName: intent.agentName,
+          messagePreview: message.substring(0, 100),
+        });
+        return false;
+      }
+      return true;
+    });
+
+    if (valid.length === 0) {
+      return {
+        dispatched: false,
+        agents: [],
+        taskIds: [],
+        summary: 'No registered agents matched',
+      };
+    }
+
     const agents = [];
     const taskIds = [];
 
-    for (const intent of matched) {
+    for (const intent of valid) {
       const task = taskQueue.enqueue({
         assignedTo: intent.agentId,
         createdBy: 'nikita',

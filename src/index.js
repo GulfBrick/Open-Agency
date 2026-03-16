@@ -251,6 +251,12 @@ async function boot() {
   // Register clients
   initClients();
 
+  // Clear any leftover FAILED tasks from previous runs
+  const clearedFailed = taskQueue.clearFailed();
+  if (clearedFailed > 0) {
+    logger.log('system', 'FAILED_TASKS_CLEARED', { count: clearedFailed });
+  }
+
   // Start the task executor — polls the queue and runs tasks through agents
   taskExecutor.start();
   logger.log('system', 'TASK_EXECUTOR_STARTED', { pollInterval: '30s' });

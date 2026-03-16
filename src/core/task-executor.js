@@ -10,7 +10,6 @@ import { logger } from './logger.js';
 import { taskQueue, TASK_STATUS } from './task-queue.js';
 import { agentRegistry } from './agent-registry.js';
 import { messageBus, MESSAGE_TYPES, PRIORITY } from './message-bus.js';
-import { telegramNotifier } from './telegram-notifier.js';
 import { experience, OUTCOME } from './experience.js';
 import { memory } from './memory.js';
 
@@ -136,11 +135,23 @@ class TaskExecutor {
    * @param {object} task — task from the queue
    */
   async executeTask(task) {
+    // Pre-dispatch validation: reject tasks for unregistered agents immediately
+    const registeredIds = new Set(agentRegistry.list());
+    if (!registeredIds.has(task.assignedTo)) {
+      const reason = `Agent not registered: ${task.assignedTo}`;
+      logger.log('task-executor', 'AGENT_NOT_REGISTERED', { agentId: task.assignedTo, taskId: task.id, reason });
+      taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
+      this._notifyNikita(task, TASK_STATUS.FAILED, null, reason);
+      // Clean up any retry state — no point retrying an unregistered agent
+      this._retries.delete(task.id);
+      this._retryAfter.delete(task.id);
+      return;
+    }
+
     const agent = agentRegistry.get(task.assignedTo);
     if (!agent) {
       logger.log('task-executor', 'AGENT_NOT_FOUND', { agentId: task.assignedTo, taskId: task.id });
       taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
-      telegramNotifier.notifyTaskFailed(task, `Agent '${task.assignedTo}' not found in registry`);
       this._notifyNikita(task, TASK_STATUS.FAILED, null, `Agent not found: ${task.assignedTo}`);
       return;
     }
@@ -155,7 +166,7 @@ class TaskExecutor {
       } else {
         logger.log('task-executor', 'NO_METHOD', { agentId: task.assignedTo, taskType: task.type, taskId: task.id });
         taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
-        telegramNotifier.notifyTaskFailed(task, `No suitable method for task type '${task.type}'`);
+        // Task failures go to memory + dashboard, not Telegram
         this._notifyNikita(task, TASK_STATUS.FAILED, null, `No method for type: ${task.type}`);
         return;
       }
@@ -194,7 +205,7 @@ class TaskExecutor {
         notes: task.description,
       });
 
-      telegramNotifier.notifyTaskCompleted(task);
+      // Task results saved to memory above — dashboard shows them, no Telegram spam
       this._notifyNikita(task, TASK_STATUS.COMPLETED, result);
 
       // Clean up retry state
@@ -232,6 +243,18 @@ class TaskExecutor {
         // All retries exhausted — mark FAILED permanently
         taskQueue.updateStatus(task.id, TASK_STATUS.FAILED);
 
+        // Save failure to memory so the dashboard can display it
+        memory.set(`task-result:${task.id}`, {
+          taskId: task.id,
+          agentId: task.assignedTo,
+          method,
+          result: null,
+          error: `Failed after ${MAX_RETRIES} attempts: ${err.message}`,
+          completedAt: new Date().toISOString(),
+          duration,
+          status: 'FAILED',
+        });
+
         experience.recordTask(task.assignedTo, {
           taskId: task.id,
           taskType: task.type,
@@ -242,7 +265,7 @@ class TaskExecutor {
           notes: `FAILED after ${MAX_RETRIES} attempts: ${err.message}`,
         });
 
-        telegramNotifier.notifyTaskFailed(task, `Failed after ${MAX_RETRIES} attempts: ${err.message}`);
+        // Task failures go to memory + dashboard, not Telegram
         this._notifyNikita(task, TASK_STATUS.FAILED, null, err.message);
 
         // Clean up retry state
