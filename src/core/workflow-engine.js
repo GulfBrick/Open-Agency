@@ -358,9 +358,7 @@ class WorkflowEngine {
           error: err.message,
         });
 
-        telegramNotifier.sendMessage(
-          `*Workflow Failed*\n\nWorkflow: ${workflow.name}\nStep: ${step.name}\nError: ${err.message}`,
-        );
+        // Workflow failure goes to dashboard logs, not Telegram
 
         return workflow;
       }
@@ -515,19 +513,8 @@ class WorkflowEngine {
   async _executeNotificationStep(workflow, step) {
     const prevOutput = this._getPreviousOutput(workflow, step);
 
-    const text = [
-      `*Workflow Complete: ${workflow.name}*`,
-      ``,
-      `*Client:* ${workflow.clientId}`,
-      ``,
-      `*Summary:*`,
-      prevOutput ? prevOutput.substring(0, 2000) : 'Workflow completed successfully.',
-      ``,
-      `All steps completed. Nothing further required from you.`,
-    ].join('\n');
-
-    await telegramNotifier.sendMessage(text);
-    step.output = 'Harry notified';
+    // Workflow completion goes to dashboard, not Telegram
+    step.output = prevOutput ? prevOutput.substring(0, 2000) : 'Workflow completed successfully.';
 
     logger.log('system', 'WORKFLOW_NOTIFICATION_SENT', {
       workflowId: workflow.workflowId,

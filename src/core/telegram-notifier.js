@@ -72,55 +72,42 @@ class TelegramNotifier {
   }
 
   // ─── Event Notifiers ──────────────────────────────────────
+  //
+  // POLICY: Telegram is for critical human-attention items ONLY:
+  //   - Boot notification (notifyBoot)
+  //   - Daily briefing (notifyBriefing)
+  //   - Escalations (notifyEscalation)
+  //   - Workflow approvals (sendMessage from workflow-engine)
+  //
+  // Task created/completed/failed/promotion go to dashboard via memory.
 
   /**
-   * Notify Harry that a new task was created.
-   * @param {object} task — task object from TaskQueue
+   * @deprecated Task creation goes to dashboard, not Telegram.
+   * Kept as no-op for backwards compatibility.
    */
-  async notifyTaskCreated(task) {
-    const text = [
-      `📋 *New Task Created*`,
-      ``,
-      `*Assigned to:* ${task.assignedTo}`,
-      `*Priority:* ${task.priority}`,
-      `*Description:* ${this._escape(task.description)}`,
-      `*Created by:* ${task.createdBy}`,
-    ].join('\n');
-    return this.sendMessage(text);
+  async notifyTaskCreated(_task) {
+    return null;
   }
 
   /**
-   * Notify Harry that a task was completed.
-   * @param {object} task — task object from TaskQueue
+   * @deprecated Task completion goes to dashboard, not Telegram.
+   * Kept as no-op for backwards compatibility.
    */
-  async notifyTaskCompleted(task) {
-    const text = [
-      `✅ *Task Completed*`,
-      ``,
-      `*Agent:* ${task.assignedTo}`,
-      `*Description:* ${this._escape(task.description)}`,
-    ].join('\n');
-    return this.sendMessage(text);
+  async notifyTaskCompleted(_task) {
+    return null;
   }
 
   /**
-   * Notify Harry that a task failed.
-   * @param {object} task — task object from TaskQueue
-   * @param {string} [reason] — why it failed
+   * @deprecated Task failure goes to dashboard, not Telegram.
+   * Kept as no-op for backwards compatibility.
    */
-  async notifyTaskFailed(task, reason) {
-    const text = [
-      `❌ *Task Failed*`,
-      ``,
-      `*Agent:* ${task.assignedTo}`,
-      `*Description:* ${this._escape(task.description)}`,
-      reason ? `*Reason:* ${this._escape(reason)}` : '',
-    ].filter(Boolean).join('\n');
-    return this.sendMessage(text);
+  async notifyTaskFailed(_task, _reason) {
+    return null;
   }
 
   /**
    * Notify Harry that something needs escalation.
+   * This is one of the FEW things that should go to Telegram.
    * @param {string} reason — why it's being escalated
    * @param {object} [context] — additional context
    */
@@ -136,20 +123,11 @@ class TelegramNotifier {
   }
 
   /**
-   * Notify Harry that an agent was promoted.
-   * @param {object} record — promotion record from PromotionEngine
+   * @deprecated Promotions go to dashboard, not Telegram.
+   * Kept as no-op for backwards compatibility.
    */
-  async notifyPromotion(record) {
-    const text = [
-      `🎖️ *Agent Promoted*`,
-      ``,
-      `*Agent:* ${record.agentId}`,
-      `*From:* ${record.previousRank}`,
-      `*To:* ${record.newRank}`,
-      `*Tasks completed:* ${record.tasksCompleted}`,
-      `*Success rate:* ${record.successRate}%`,
-    ].join('\n');
-    return this.sendMessage(text);
+  async notifyPromotion(_record) {
+    return null;
   }
 
   /**

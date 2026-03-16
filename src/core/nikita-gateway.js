@@ -98,10 +98,8 @@ class NikitaGateway {
         });
       }
 
-      // Send response to Harry via Telegram
-      if (decision.response) {
-        telegramNotifier.sendMessage(`*Nikita:* ${decision.response}`);
-      }
+      // Response goes to dashboard chat, not Telegram
+      // (Telegram is reserved for boot, daily briefing, and escalations)
 
       // Send response back on the bus if the message came from another agent
       if (decision.response && message.from !== AGENT_ID) {
@@ -210,14 +208,13 @@ class NikitaGateway {
       CONTENT_CAMPAIGN: 'Content Campaign',
     };
 
-    await telegramNotifier.sendMessage(
-      `*Workflow Started: ${templateNames[templateName] || templateName}*\n\n` +
-      `*Client:* ${clientId}\n` +
-      `*Brief:* ${taskDescription.substring(0, 300)}\n` +
-      `*Steps:* ${workflow.steps.length}\n` +
-      `*Agents involved:* ${[...new Set(workflow.steps.flatMap(s => s.agents))].join(', ')}\n\n` +
-      `I'll keep you posted as this progresses.`,
-    );
+    // Workflow status saved to memory for dashboard display (not Telegram)
+    logger.log(AGENT_ID, 'WORKFLOW_STARTED', {
+      workflowId: workflow.workflowId,
+      template: templateName,
+      clientId,
+      steps: workflow.steps.length,
+    });
 
     // Run the workflow (async — doesn't block)
     const result = workflowEngine.runWorkflow(workflow.workflowId);
@@ -262,7 +259,7 @@ class NikitaGateway {
         description: task.description,
       });
 
-      telegramNotifier.notifyTaskCreated(created);
+      // Task creation goes to dashboard, not Telegram
 
       const agent = agentRegistry.get(task.assignTo);
       if (agent) {
@@ -275,7 +272,7 @@ class NikitaGateway {
   }
 
   /**
-   * Send Harry a status update via Telegram.
+   * Save agency status to memory for dashboard display.
    */
   async broadcastStatus() {
     const pending = taskQueue.getAll(TASK_STATUS.PENDING);
@@ -284,23 +281,13 @@ class NikitaGateway {
     const failed = taskQueue.getAll(TASK_STATUS.FAILED);
     const agents = agentRegistry.list();
 
-    const text = [
-      `📊 *Agency Status Update*`,
-      ``,
-      `*Agents online:* ${agents.length}`,
-      `*Tasks pending:* ${pending.length}`,
-      `*Tasks in progress:* ${inProgress.length}`,
-      `*Tasks completed:* ${completed.length}`,
-      `*Tasks failed:* ${failed.length}`,
-      ``,
-      `Everything's running. I'm watching the board.`,
-    ].join('\n');
-
-    await telegramNotifier.sendMessage(text);
+    // Status goes to dashboard via memory, not Telegram
     logger.log(AGENT_ID, 'STATUS_BROADCAST', {
       agents: agents.length,
       pending: pending.length,
       inProgress: inProgress.length,
+      completed: completed.length,
+      failed: failed.length,
     });
   }
 }
