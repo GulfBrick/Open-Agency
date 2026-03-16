@@ -23,6 +23,8 @@ import { scheduler } from '../core/scheduler.js';
 import { mountOnboardingRoutes } from '../core/client-onboarding-api.js';
 import { workflowEngine } from '../core/workflow-engine.js';
 import { nikitaConversation } from '../core/nikita-conversation.js';
+import { messageDispatcher } from '../core/message-dispatcher.js';
+import { agentReporter } from '../core/agent-reporter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = 3001;
@@ -306,8 +308,26 @@ function createDashboardServer() {
     logger.log('nikita', 'DASHBOARD_CHAT_MESSAGE', { length: message.length });
 
     try {
-      const reply = await nikitaConversation.respond(message, 'dashboard');
-      res.json({ reply });
+      let reply = await nikitaConversation.respond(message, 'dashboard');
+
+      // Analyse intent and dispatch to agents
+      const dispatch = messageDispatcher.dispatch(message);
+
+      if (dispatch.dispatched) {
+        reply += `\n\n_Dispatched to ${dispatch.agents.join(', ')}. I will update you when they report back._`;
+        logger.log('nikita', 'MESSAGE_DISPATCHED', {
+          agents: dispatch.agents,
+          taskIds: dispatch.taskIds,
+          summary: dispatch.summary,
+        });
+      }
+
+      res.json({
+        reply,
+        dispatched: dispatch.dispatched,
+        agents: dispatch.agents,
+        taskIds: dispatch.taskIds,
+      });
     } catch (err) {
       logger.log('nikita', 'DASHBOARD_CHAT_ERROR', { error: err.message });
       res.status(500).json({ error: 'Failed to get response from Nikita' });
@@ -346,6 +366,17 @@ function createDashboardServer() {
         result: memory.get(`task-result:${t.id}`) || null,
       }));
       res.json(grouped);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── API: Task Results (Agent Reports) ──────────────────
+
+  app.get('/api/tasks/results', (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 10;
+      res.json(agentReporter.getRecentResults(limit));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

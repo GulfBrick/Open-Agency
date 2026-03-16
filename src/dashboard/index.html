@@ -2188,6 +2188,126 @@
       bottom: 24px;
     }
 
+    /* ─── Agent Reports Panel (inside chat sidebar) ───── */
+    .agent-reports-panel {
+      border-top: 1px solid rgba(124, 58, 237, 0.10);
+      max-height: 220px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .agent-reports-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+
+    .agent-reports-header:hover {
+      color: var(--text-dim);
+    }
+
+    .agent-reports-badge {
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(124, 58, 237, 0.15);
+      color: var(--violet);
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-family: var(--mono);
+    }
+
+    .agent-reports-list {
+      overflow-y: auto;
+      padding: 0 12px 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(124, 58, 237, 0.15) transparent;
+    }
+
+    .agent-reports-list::-webkit-scrollbar { width: 3px; }
+    .agent-reports-list::-webkit-scrollbar-track { background: transparent; }
+    .agent-reports-list::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.2); border-radius: 3px; }
+
+    .agent-report-item {
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      background: rgba(15, 22, 35, 0.6);
+      border: 1px solid rgba(124, 58, 237, 0.06);
+      animation: chatMsgIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .agent-report-item .report-agent {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--violet);
+      margin-bottom: 2px;
+    }
+
+    .agent-report-item .report-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-report-item .report-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .agent-report-item .report-status {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .agent-report-item .report-status.completed {
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    .agent-report-item .report-status.failed {
+      color: var(--rose);
+      background: var(--rose-dim);
+    }
+
+    .agent-report-item .report-status.pending,
+    .agent-report-item .report-status.in_progress {
+      color: var(--amber);
+      background: var(--amber-dim);
+    }
+
+    /* Dispatch badge shown in chat messages */
+    .chat-dispatch-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--green);
+      background: var(--green-dim);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+      font-family: var(--mono);
+      letter-spacing: 0.3px;
+    }
+
     @media (max-width: 768px) {
       .nikita-chat { width: 100%; }
       .nikita-chat-toggle { bottom: 16px; right: 16px; width: 46px; height: 46px; font-size: 20px; }
@@ -2556,6 +2676,16 @@
     <button class="nikita-chat-close" id="nikita-chat-close" title="Close chat">&#10005;</button>
     <div class="nikita-chat-thread" id="nikita-chat-thread">
       <div class="nikita-chat-thread-inner" id="nikita-chat-messages"></div>
+    </div>
+    <!-- Agent Reports Panel -->
+    <div class="agent-reports-panel" id="agent-reports-panel">
+      <div class="agent-reports-header" id="agent-reports-toggle">
+        <span>Agent Reports</span>
+        <span class="agent-reports-badge" id="agent-reports-count">0</span>
+      </div>
+      <div class="agent-reports-list" id="agent-reports-list">
+        <div style="color: var(--text-muted); font-size: 11px; padding: 8px;">No reports yet</div>
+      </div>
     </div>
     <div class="nikita-chat-bar">
       <div class="nikita-chat-bar-inner">
@@ -3440,6 +3570,10 @@
         if (data.reply) {
           appendChatMsg('nikita', data.reply, 'dashboard');
           speakNikita(data.reply);
+          // Refresh reports immediately after dispatch
+          if (data.dispatched) {
+            fetchAgentReports();
+          }
         } else if (data.error) {
           appendChatMsg('nikita', `Something went wrong: ${data.error}`);
         }
@@ -3459,6 +3593,59 @@
         sendNikitaMessage();
       }
     });
+
+    // ─── Agent Reports (inside chat sidebar) ─────────────
+    const reportsPanel = document.getElementById('agent-reports-panel');
+    const reportsList = document.getElementById('agent-reports-list');
+    const reportsCount = document.getElementById('agent-reports-count');
+    const reportsToggle = document.getElementById('agent-reports-toggle');
+    let reportsExpanded = true;
+
+    reportsToggle.addEventListener('click', () => {
+      reportsExpanded = !reportsExpanded;
+      reportsList.style.display = reportsExpanded ? '' : 'none';
+    });
+
+    async function fetchAgentReports() {
+      try {
+        const res = await fetch(`${API}/api/tasks/results?limit=5`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        renderAgentReports(data);
+      } catch (err) {
+        console.error('Failed to fetch agent reports:', err);
+      }
+    }
+
+    function renderAgentReports(reports) {
+      reportsCount.textContent = reports.length;
+      if (reports.length === 0) {
+        reportsList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; padding: 8px;">No reports yet</div>';
+        return;
+      }
+
+      reportsList.innerHTML = reports.map(r => {
+        const shortDesc = (r.description || '').split('.')[0].substring(0, 60);
+        const statusClass = r.status === 'COMPLETED' ? 'completed' : r.status === 'FAILED' ? 'failed' : 'pending';
+        const statusLabel = r.status === 'COMPLETED' ? 'Done' : r.status === 'FAILED' ? 'Failed' : 'Pending';
+        const timeStr = r.completedAt ? new Date(r.completedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+        const resultText = r.result ? (typeof r.result === 'string' ? r.result.substring(0, 80) : JSON.stringify(r.result).substring(0, 80)) : '';
+
+        return `<div class="agent-report-item">
+          <div class="report-agent">${esc(r.agent)}</div>
+          <div class="report-desc">${esc(shortDesc)}</div>
+          ${resultText ? `<div class="report-desc" style="color:var(--text);margin-top:2px;font-style:italic;">${esc(resultText)}</div>` : ''}
+          <div class="report-meta">
+            <span class="report-status ${statusClass}">${statusLabel}</span>
+            <span>${timeStr}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Auto-refresh reports every 10 seconds
+    fetchAgentReports();
+    setInterval(fetchAgentReports, 10000);
 
     // ─── ElevenLabs TTS ──────────────────────────────────
     let _elevenlabsKey = null;
