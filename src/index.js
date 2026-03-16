@@ -273,9 +273,8 @@ async function boot() {
 
   // telegramInbound disabled — OpenClaw handles Telegram polling; running a second poller causes 409 conflicts
 
-  // Notify Harry on Telegram that the agency is online
-  const totalAgents = agentRegistry.list().length;
-  telegramNotifier.notifyBoot(bootCount, totalAgents);
+  // Boot notification disabled — heartbeat handles status monitoring
+  // telegramNotifier.notifyBoot(bootCount, totalAgents);
 
   // Generate a briefing if API key is available
   if (process.env.ANTHROPIC_API_KEY) {
