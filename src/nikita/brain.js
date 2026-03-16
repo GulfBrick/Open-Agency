@@ -113,7 +113,7 @@ class NikitaBrain {
           priority: task.priority || 'MEDIUM',
           description: task.description,
         });
-        telegramNotifier.notifyTaskCreated(created);
+        // Task creation goes to dashboard, not Telegram
       }
     }
 
@@ -177,8 +177,13 @@ class NikitaBrain {
       generatedAt: new Date().toISOString(),
     });
 
-    // Push briefing to Harry's Telegram
-    telegramNotifier.notifyBriefing(briefing);
+    // Push briefing to Harry's Telegram — only once per day
+    const lastBriefingDate = memory.get('lastBriefingDate');
+    const today = new Date().toDateString();
+    if (lastBriefingDate !== today) {
+      memory.set('lastBriefingDate', today);
+      telegramNotifier.notifyBriefing(briefing);
+    }
 
     return briefing;
   }
