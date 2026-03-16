@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { initDb } from './core/db.js';
 import { logger } from './core/logger.js';
 import { memory } from './core/memory.js';
 import { messageBus, MESSAGE_TYPES, PRIORITY } from './core/message-bus.js';
@@ -174,6 +175,9 @@ async function boot() {
 
   // Initialise core systems
   logger.log('system', 'BOOT', { phase: 'core_init' });
+
+  // Connect to database (non-fatal if unavailable)
+  await initDb();
 
   // Load previous state
   const bootCount = (memory.get('bootCount') || 0) + 1;

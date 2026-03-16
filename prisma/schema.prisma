@@ -1,0 +1,96 @@
+// Open Agency — Prisma Schema
+// Deploy with: npx prisma migrate deploy
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id           String   @id @default(uuid())
+  whopUserId   String   @unique
+  email        String   @unique
+  businessName String
+  tier         String   // starter | growth | enterprise
+  brief        String?
+  timezone     String   @default("UTC")
+  createdAt    DateTime @default(now())
+
+  agents       ClientAgent[]
+  tasks        Task[]
+  reports      Report[]
+  integration  Integration?
+  messages     Message[]
+}
+
+model ClientAgent {
+  id       String @id @default(uuid())
+  clientId String
+  agentId  String // matches agent name e.g. "marcus", "priya"
+  level    Int    @default(1)
+  xp       Int    @default(0)
+
+  client   Client @relation(fields: [clientId], references: [id])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  clientId    String
+  agentId     String
+  type        String
+  status      String    @default("pending") // pending | running | complete | failed
+  input       Json?
+  output      Json?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  client      Client    @relation(fields: [clientId], references: [id])
+}
+
+model Report {
+  id        String   @id @default(uuid())
+  clientId  String
+  agentId   String
+  type      String
+  content   String
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id])
+}
+
+model Integration {
+  id             String  @id @default(uuid())
+  clientId       String  @unique
+  githubToken    String?
+  gitlabToken    String?
+  bitbucketToken String?
+  githubRepo     String?
+  gitlabRepo     String?
+  bitbucketRepo  String?
+
+  client         Client  @relation(fields: [clientId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  clientId  String
+  role      String   // user | assistant
+  content   String
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  clientId  String
+  agentId   String
+  action    String   // e.g. "report_generated", "token_saved", "repo_pushed"
+  detail    Json?
+  ip        String?
+  createdAt DateTime @default(now())
+}

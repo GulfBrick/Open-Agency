@@ -25,6 +25,9 @@ import { workflowEngine } from '../core/workflow-engine.js';
 import { nikitaConversation } from '../core/nikita-conversation.js';
 import { messageDispatcher } from '../core/message-dispatcher.js';
 import { agentReporter } from '../core/agent-reporter.js';
+import { mountWhopWebhook } from '../core/whop-webhook.js';
+import { mountGitIntegrationRoutes } from '../core/git-integration.js';
+import rateLimit from 'express-rate-limit';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = 3001;
@@ -49,8 +52,41 @@ function createDashboardServer() {
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'X-API-Key'],
   }));
+  // Whop webhook needs raw body — mount BEFORE express.json()
+  mountWhopWebhook(app);
+
   app.use(express.json());
   app.use('/assets', express.static(join(__dirname, 'assets')));
+
+  // ─── Rate Limiting ───────────────────────────────────────────
+
+  const publicLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.path.startsWith('/api/') && !!req.headers['x-api-key'],
+  });
+
+  const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 50,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.use('/api/webhooks', webhookLimiter);
+  app.use('/api/', (req, res, next) => {
+    if (req.headers['x-api-key']) return authLimiter(req, res, next);
+    return publicLimiter(req, res, next);
+  });
 
   // ─── API Key Authentication Middleware ──────────────────────
   //
@@ -295,6 +331,9 @@ function createDashboardServer() {
 
   // ─── Client Onboarding Routes ────────────────────────────
   mountOnboardingRoutes(app);
+
+  // ─── Git Integration Routes ───────────────────────────────
+  mountGitIntegrationRoutes(app);
 
   // ─── API: Nikita Chat Message ──────────────────────────────
 
