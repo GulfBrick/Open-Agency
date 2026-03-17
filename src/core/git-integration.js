@@ -73,10 +73,14 @@ async function validateToken(platform, token, repoUrl) {
       return { valid: true, username: user.username };
     },
     bitbucket: async () => {
+      // Bitbucket App Passwords use HTTP Basic auth: username:app_password
+      // token may be "user:app_password" combined, or just app_password (legacy)
+      const basicCreds = token.includes(':') ? token : `${repoUrl || ''}:${token}`;
+      const encoded = Buffer.from(basicCreds).toString('base64');
       const res = await fetch('https://api.bitbucket.org/2.0/user', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Basic ${encoded}` },
       });
-      if (!res.ok) throw new Error(`Bitbucket returned ${res.status}`);
+      if (!res.ok) throw new Error(`Bitbucket returned ${res.status} — check username and App Password`);
       const user = await res.json();
       return { valid: true, username: user.nickname };
     },

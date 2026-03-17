@@ -121,4 +121,42 @@ async function sendTaskCompletionEmail({ email, agentId, taskType, summary }) {
   });
 }
 
-export { sendWelcomeEmail, sendTaskCompletionEmail };
+// ─── Agent Level-Up Email ────────────────────────────────────
+
+async function sendAgentLevelUpEmail({ email, agentId, agentName, newLevel, businessName }) {
+  const t = getTransporter();
+  if (!t) return;
+
+  const portalUrl = `${process.env.FRONTEND_URL || 'https://oagencyconsulting.com'}/portal`;
+
+  const levelMessages = {
+    2: 'getting to know your business inside out',
+    3: 'operating at senior level — deeper insights, sharper recommendations',
+    4: 'working at expert level — you\'re seeing the difference',
+    5: 'hitting peak performance — elite-tier outputs',
+  };
+  const levelMsg = levelMessages[newLevel] || 'continuing to level up';
+
+  await t.sendMail({
+    from: `"Nikita — Open Agency" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: `${agentName} just hit Level ${newLevel} 🎯`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; background: #0a0a0a; color: #e5e5e5; max-width: 500px; margin: 0 auto; padding: 40px 32px; border-radius: 12px;">
+        <div style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 24px;">Open<span style="color: #7c3aed">Agency</span></div>
+        <div style="background: #7c3aed22; border: 1px solid #7c3aed44; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 8px;">⚡</div>
+          <div style="font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px;">${agentName} reached Level ${newLevel}</div>
+          <div style="font-size: 13px; color: #a78bfa;">${levelMsg}</div>
+        </div>
+        <p style="color: #888; font-size: 14px; line-height: 1.7; margin: 0 0 20px;">
+          The longer your agents work with ${businessName || 'your business'}, the better they get. ${agentName} has been putting in the work — and it shows.
+        </p>
+        <a href="${portalUrl}" style="display: inline-block; background: #7c3aed; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">View in Portal →</a>
+        <p style="color: #333; font-size: 11px; margin-top: 32px;">Open Agency · Intelligence at work</p>
+      </div>
+    `,
+  });
+}
+
+export { sendWelcomeEmail, sendTaskCompletionEmail, sendAgentLevelUpEmail };

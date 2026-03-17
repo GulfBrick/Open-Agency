@@ -19,6 +19,7 @@
 
 import cron from 'node-cron';
 import { logger } from './logger.js';
+import { sendAgentLevelUpEmail } from './email.js';
 import {
   runMarcusReportsForAll,
   runZaraReportsForAll,
@@ -103,6 +104,27 @@ async function runXpUpdates() {
             detail: { oldLevel: existing.level, newLevel, xp: newXp },
           },
         });
+
+        // Send level-up email to client
+        try {
+          const clientRow = await db.client.findUnique({
+            where: { id: clientId },
+            select: { email: true, businessName: true },
+          });
+          if (clientRow) {
+            const agentName = agentId.charAt(0).toUpperCase() + agentId.slice(1);
+            await sendAgentLevelUpEmail({
+              email: clientRow.email,
+              agentId,
+              agentName,
+              newLevel,
+              businessName: clientRow.businessName,
+            });
+            logger.log('cron', 'LEVEL_UP_EMAIL_SENT', { clientId, agentId, newLevel });
+          }
+        } catch (emailErr) {
+          logger.log('cron', 'LEVEL_UP_EMAIL_FAILED', { clientId, agentId, error: emailErr.message });
+        }
       }
 
       awarded++;

@@ -508,6 +508,86 @@ You are confident, warm, direct. You get to the point. You answer their question
     res.json({ ok: true, taskId: task.id, agentId, clientId });
   });
 
+  // GET /api/clients/:id/activity — merged activity feed (reports + tasks)
+  app.get('/api/clients/:id/activity', requireClient, async (req, res) => {
+    const db = getDb();
+    try {
+      const [reports, tasks, agentRows] = await Promise.all([
+        db.report.findMany({
+          where: { clientId: req.params.id },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: { id: true, agentId: true, type: true, content: true, createdAt: true },
+        }),
+        db.task.findMany({
+          where: { clientId: req.params.id, status: { in: ['complete', 'failed'] } },
+          orderBy: { completedAt: 'desc' },
+          take: 20,
+          select: { id: true, agentId: true, type: true, status: true, output: true, completedAt: true, createdAt: true },
+        }),
+        db.clientAgent.findMany({
+          where: { clientId: req.params.id },
+          select: { agentId: true, level: true, xp: true },
+        }),
+      ]);
+
+      // Merge and sort by date
+      const activities = [];
+
+      for (const r of reports) {
+        let summary = '';
+        try {
+          const parsed = JSON.parse(r.content);
+          summary = parsed.summary || '';
+        } catch { /* ignore */ }
+        activities.push({
+          id: `report-${r.id}`,
+          kind: 'report',
+          agentId: r.agentId,
+          type: r.type.replace(/-/g, ' '),
+          summary,
+          status: 'complete',
+          createdAt: r.createdAt,
+        });
+      }
+
+      for (const t of tasks) {
+        let summary = '';
+        if (t.output && typeof t.output === 'object') {
+          summary = t.output.summary || '';
+        }
+        activities.push({
+          id: `task-${t.id}`,
+          kind: 'task',
+          agentId: t.agentId,
+          type: t.type.replace(/-/g, ' '),
+          summary,
+          status: t.status,
+          createdAt: t.completedAt || t.createdAt,
+        });
+      }
+
+      // Sort newest first
+      activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Build agent level map
+      const agentLevels = {};
+      for (const a of agentRows) {
+        agentLevels[a.agentId] = { level: a.level, xp: a.xp };
+      }
+
+      res.json({
+        activities: activities.slice(0, 30),
+        agentLevels,
+        totalReports: reports.length,
+        totalTasks: tasks.length,
+      });
+    } catch (err) {
+      logger.log('client-api', 'ACTIVITY_ERROR', { error: err.message });
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
   // GET /api/audit/:clientId — admin only
   app.get('/api/audit/:clientId', async (req, res) => {
     // Admin gate — must have API key set
