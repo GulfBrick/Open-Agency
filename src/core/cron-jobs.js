@@ -37,6 +37,16 @@ import {
   runEliReportsForAll,
   runNoraReportsForAll,
   runOttoReportsForAll,
+  runRioReportsForAll,
+  runNovaReportsForAll,
+  runByteReportsForAll,
+  runCleoReportsForAll,
+  runSamReportsForAll,
+  runVeraReportsForAll,
+  runCoraReportsForAll,
+  runJulesReportsForAll,
+  runDrewReportsForAll,
+  runSageReportsForAll,
 } from './client-reports.js';
 import { getDb, isDbAvailable } from './db.js';
 
@@ -273,8 +283,78 @@ function startCronJobs() {
     catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'otto-operations', error: e.message }); }
   }, { timezone: 'UTC' });
 
-  logger.log('cron', 'STARTED', { jobs: 19 });
-  console.log('  Cron Jobs ........... OK  (19 jobs scheduled)');
+  // 20. Rio frontend dev — every Wednesday at 09:30 UTC (Growth + Enterprise)
+  cron.schedule('30 9 * * 3', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'rio-frontend' });
+    try { await runRioReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'rio-frontend', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 21. Nova backend dev — every Thursday at 09:30 UTC (Growth + Enterprise)
+  cron.schedule('30 9 * * 4', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'nova-backend' });
+    try { await runNovaReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'nova-backend', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 22. Byte QA — every Thursday at 10:00 UTC (Growth + Enterprise)
+  cron.schedule('0 10 * * 4', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'byte-qa' });
+    try { await runByteReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'byte-qa', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 23. Cleo outreach — every Monday at 08:00 UTC (Enterprise only)
+  cron.schedule('0 8 * * 1', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'cleo-outreach' });
+    try { await runCleoReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'cleo-outreach', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 24. Sam CRM — every Tuesday at 08:00 UTC (Enterprise only)
+  cron.schedule('0 8 * * 2', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'sam-crm' });
+    try { await runSamReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'sam-crm', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 25. Vera admin — every Wednesday at 08:30 UTC (Enterprise only)
+  cron.schedule('30 8 * * 3', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'vera-admin' });
+    try { await runVeraReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'vera-admin', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 26. Cora compliance — every Thursday at 09:00 UTC (Enterprise only)
+  cron.schedule('0 9 * * 4', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'cora-compliance' });
+    try { await runCoraReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'cora-compliance', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 27. Jules legal docs — every Friday at 09:30 UTC (Enterprise only)
+  cron.schedule('30 9 * * 5', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'jules-legal-docs' });
+    try { await runJulesReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'jules-legal-docs', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 28. Drew talent — every Tuesday at 10:00 UTC (Enterprise only)
+  cron.schedule('0 10 * * 2', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'drew-talent' });
+    try { await runDrewReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'drew-talent', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 29. Sage people ops — every Monday at 10:30 UTC (Enterprise only)
+  cron.schedule('30 10 * * 1', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'sage-people-ops' });
+    try { await runSageReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'sage-people-ops', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  logger.log('cron', 'STARTED', { jobs: 29 });
+  console.log('  Cron Jobs ........... OK  (29 jobs scheduled — all 27 agents)');
 }
 
 export { startCronJobs, runXpUpdates };

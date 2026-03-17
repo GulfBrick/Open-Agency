@@ -37,6 +37,16 @@ import {
   generateEliReport,
   generateNoraReport,
   generateOttoReport,
+  generateRioReport,
+  generateNovaReport,
+  generateByteReport,
+  generateCleoReport,
+  generateSamReport,
+  generateVeraReport,
+  generateCoraReport,
+  generateJulesReport,
+  generateDrewReport,
+  generateSageReport,
 } from './client-reports.js';
 
 const MODEL = 'claude-haiku-4-5';
@@ -186,8 +196,8 @@ function mountClientApiRoutes(app) {
     // Determine which agents to kick off by tier
     const KICKOFF_AGENTS = {
       starter: ['nikita'],
-      growth:  ['nikita', 'marcus', 'priya'],
-      enterprise: ['nikita', 'marcus', 'priya', 'zara'],
+      growth:  ['nikita', 'marcus', 'priya', 'zara', 'kai'],
+      enterprise: ['nikita', 'marcus', 'priya', 'zara', 'kai', 'rex', 'lena'],
     };
 
     const agents = KICKOFF_AGENTS[c.tier] || KICKOFF_AGENTS.starter;
@@ -221,10 +231,33 @@ function mountClientApiRoutes(app) {
         const task = tasks[i];
         try {
           let result;
-          if (agentId === 'nikita')  result = await generateNikitaDigest(c);
+          if (agentId === 'nikita')      result = await generateNikitaDigest(c);
           else if (agentId === 'marcus') result = await generateMarcusReport(c);
           else if (agentId === 'priya')  result = await generatePriyaReport(c);
           else if (agentId === 'zara')   result = await generateZaraReport(c);
+          else if (agentId === 'kai')    result = await generateKaiReport(c);
+          else if (agentId === 'mia')    result = await generateMiaReport(c);
+          else if (agentId === 'luna')   result = await generateLunaReport(c);
+          else if (agentId === 'rex')    result = await generateRexReport(c);
+          else if (agentId === 'lena')   result = await generateLenaReport(c);
+          else if (agentId === 'theo')   result = await generateTheoReport(c);
+          else if (agentId === 'iris')   result = await generateIrisReport(c);
+          else if (agentId === 'felix')  result = await generateFelixReport(c);
+          else if (agentId === 'eli')    result = await generateEliReport(c);
+          else if (agentId === 'nora')   result = await generateNoraReport(c);
+          else if (agentId === 'otto')   result = await generateOttoReport(c);
+          else if (agentId === 'lex')    result = await generateLexReport(c);
+          else if (agentId === 'harper') result = await generateHarperReport(c);
+          else if (agentId === 'rio')    result = await generateRioReport(c);
+          else if (agentId === 'nova')   result = await generateNovaReport(c);
+          else if (agentId === 'byte')   result = await generateByteReport(c);
+          else if (agentId === 'cleo')   result = await generateCleoReport(c);
+          else if (agentId === 'sam')    result = await generateSamReport(c);
+          else if (agentId === 'vera')   result = await generateVeraReport(c);
+          else if (agentId === 'cora')   result = await generateCoraReport(c);
+          else if (agentId === 'jules')  result = await generateJulesReport(c);
+          else if (agentId === 'drew')   result = await generateDrewReport(c);
+          else if (agentId === 'sage')   result = await generateSageReport(c);
 
           await db.task.update({
             where: { id: task.id },
@@ -440,6 +473,25 @@ You are confident, warm, direct. You get to the point. You answer their question
         else if (agentId === 'theo') result = await generateTheoReport(clientRecord);
         else if (agentId === 'lex') result = await generateLexReport(clientRecord);
         else if (agentId === 'harper') result = await generateHarperReport(clientRecord);
+        else if (agentId === 'kai') result = await generateKaiReport(clientRecord);
+        else if (agentId === 'mia') result = await generateMiaReport(clientRecord);
+        else if (agentId === 'luna') result = await generateLunaReport(clientRecord);
+        else if (agentId === 'rex') result = await generateRexReport(clientRecord);
+        else if (agentId === 'iris') result = await generateIrisReport(clientRecord);
+        else if (agentId === 'felix') result = await generateFelixReport(clientRecord);
+        else if (agentId === 'eli') result = await generateEliReport(clientRecord);
+        else if (agentId === 'nora') result = await generateNoraReport(clientRecord);
+        else if (agentId === 'otto') result = await generateOttoReport(clientRecord);
+        else if (agentId === 'rio') result = await generateRioReport(clientRecord);
+        else if (agentId === 'nova') result = await generateNovaReport(clientRecord);
+        else if (agentId === 'byte') result = await generateByteReport(clientRecord);
+        else if (agentId === 'cleo') result = await generateCleoReport(clientRecord);
+        else if (agentId === 'sam') result = await generateSamReport(clientRecord);
+        else if (agentId === 'vera') result = await generateVeraReport(clientRecord);
+        else if (agentId === 'cora') result = await generateCoraReport(clientRecord);
+        else if (agentId === 'jules') result = await generateJulesReport(clientRecord);
+        else if (agentId === 'drew') result = await generateDrewReport(clientRecord);
+        else if (agentId === 'sage') result = await generateSageReport(clientRecord);
 
         await db.task.update({
           where: { id: task.id },
