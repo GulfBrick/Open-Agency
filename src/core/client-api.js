@@ -24,9 +24,13 @@ import {
   generateZaraReport,
   generatePriyaReport,
   generateNikitaDigest,
+  generateLenaReport,
+  generateTheoReport,
+  generateLexReport,
+  generateHarperReport,
 } from './client-reports.js';
 
-const MODEL = 'claude-haiku-4-5';
+const MODEL = 'claude-sonnet-4-20250514';
 const anthropic = new Anthropic();
 
 // ─── All 27 Agents (canonical list) ─────────────────────────
@@ -91,7 +95,7 @@ const MessageSchema = z.object({
 
 const TriggerSchema = z.object({
   clientId: z.string().uuid(),
-  agentId: z.enum(['marcus', 'zara', 'priya', 'nikita']),
+  agentId: z.enum(['marcus', 'zara', 'priya', 'nikita', 'lena', 'theo', 'lex', 'harper']),
 });
 
 // ─── Mount All Client Routes ─────────────────────────────────
@@ -306,6 +310,10 @@ You are confident, warm, direct. You get to the point. You answer their question
         else if (agentId === 'zara') result = await generateZaraReport(clientRecord);
         else if (agentId === 'priya') result = await generatePriyaReport(clientRecord);
         else if (agentId === 'nikita') result = await generateNikitaDigest(clientRecord);
+        else if (agentId === 'lena') result = await generateLenaReport(clientRecord);
+        else if (agentId === 'theo') result = await generateTheoReport(clientRecord);
+        else if (agentId === 'lex') result = await generateLexReport(clientRecord);
+        else if (agentId === 'harper') result = await generateHarperReport(clientRecord);
 
         await db.task.update({
           where: { id: task.id },

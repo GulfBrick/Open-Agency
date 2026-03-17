@@ -28,6 +28,7 @@ import { agentReporter } from '../core/agent-reporter.js';
 import { mountWhopWebhook } from '../core/whop-webhook.js';
 import { mountGitIntegrationRoutes } from '../core/git-integration.js';
 import { mountClientApiRoutes } from '../core/client-api.js';
+import { mountAuthRoutes } from '../core/auth-api.js';
 import { startCronJobs } from '../core/cron-jobs.js';
 import rateLimit from 'express-rate-limit';
 
@@ -95,7 +96,13 @@ function createDashboardServer() {
   // Protects all /api/* routes except explicitly exempted ones.
   // Checks X-API-Key header against OPEN_AGENCY_API_KEY env var.
 
-  const EXEMPT_ROUTES = new Set(['/api/health', '/api/config/public']);
+  const EXEMPT_ROUTES = new Set([
+    '/api/health',
+    '/api/config/public',
+    '/api/auth/lookup',
+    '/api/auth/register',
+    '/api/webhooks/whop',
+  ]);
 
   function apiKeyAuth(req, res, next) {
     // Only apply to /api/* routes
@@ -339,6 +346,9 @@ function createDashboardServer() {
 
   // ─── Client API Routes (full REST) ───────────────────────
   mountClientApiRoutes(app);
+
+  // ─── Auth Routes (lookup / register) ─────────────────────
+  mountAuthRoutes(app);
 
   // ─── API: Nikita Chat Message ──────────────────────────────
 

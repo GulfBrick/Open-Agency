@@ -11,7 +11,7 @@ import { getDb, isDbAvailable } from './db.js';
 import { logger } from './logger.js';
 import { sendTaskCompletionEmail } from './email.js';
 
-const MODEL = 'claude-haiku-4-5';
+const MODEL = 'claude-sonnet-4-20250514';
 const client = new Anthropic();
 
 // ─── Agent Prompt Builder ────────────────────────────────────
@@ -302,6 +302,191 @@ Format as JSON:
   return result;
 }
 
+// ─── Lena — Lead Generation Report ──────────────────────────
+
+async function generateLenaReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  logger.log('lena', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Lena, the Lead Generation specialist at Open Agency. You are relentless, data-driven, and always building pipeline. Each day you research ideal customer profiles, build prospect lists, and identify high-value leads for clients. You are specific about who to target and why.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Lena', 'Lead Generation',
+    businessName, brief, tier,
+    'Run a daily lead generation pass. Produce: 5 new qualified prospect leads (with company name, contact name, role, LinkedIn URL placeholder, and why they fit the ICP), a summary of ICP adjustments, and 3 outreach angles to test this week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('lena', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const db = getDb();
+  if (db && isDbAvailable()) {
+    // Save as task output
+    await db.task.create({
+      data: {
+        clientId,
+        agentId: 'lena',
+        type: 'daily-lead-gen',
+        status: 'complete',
+        input: { trigger: 'cron' },
+        output: result,
+        completedAt: new Date(),
+      },
+    });
+    await db.auditLog.create({
+      data: {
+        clientId,
+        agentId: 'lena',
+        action: 'lead_gen_completed',
+        detail: { prospects: result.next_actions?.length || 0 },
+      },
+    });
+  }
+
+  try {
+    await sendTaskCompletionEmail({
+      email,
+      agentId: 'lena',
+      taskType: 'Daily Lead Generation',
+      summary: result.summary,
+    });
+  } catch (err) {
+    logger.log('lena', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('lena', 'REPORT_DONE', { clientId });
+  return result;
+}
+
+// ─── Theo — SEO Report ──────────────────────────────────────
+
+async function generateTheoReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  logger.log('theo', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Theo, the SEO specialist at Open Agency. You are methodical, keyword-obsessed, and always optimising. Each week you produce SEO audits with keyword rankings, on-page recommendations, content briefs, and technical SEO fixes. You back every recommendation with reasoning.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Theo', 'SEO Specialist',
+    businessName, brief, tier,
+    'Produce the weekly SEO check. Cover: 5 target keywords with estimated ranking, 3 on-page optimisation recommendations, 2 content brief ideas targeting search intent, 1 technical SEO issue to fix, and a competitor keyword gap analysis.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('theo', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'theo', 'weekly-seo-check', content);
+
+  try {
+    await sendTaskCompletionEmail({
+      email,
+      agentId: 'theo',
+      taskType: 'Weekly SEO Check',
+      summary: result.summary,
+    });
+  } catch (err) {
+    logger.log('theo', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('theo', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Lex — Legal Document Review (Enterprise only) ──────────
+
+async function generateLexReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier !== 'enterprise') return null;
+
+  logger.log('lex', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Lex, the Legal Director at Open Agency. You are thorough, cautious, and always flagging risk. Each week you review your client's legal exposure — contracts, terms, compliance obligations, and regulatory changes. You produce actionable summaries, not jargon.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Lex', 'Legal Director',
+    businessName, brief, tier,
+    'Produce the weekly legal document review. Cover: current contract/risk summary, 3 compliance items to check, any regulatory changes affecting the client\'s industry, and recommended legal actions for the week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('lex', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'lex', 'weekly-legal-review', content);
+
+  try {
+    await sendTaskCompletionEmail({
+      email,
+      agentId: 'lex',
+      taskType: 'Weekly Legal Review',
+      summary: result.summary,
+    });
+  } catch (err) {
+    logger.log('lex', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('lex', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Harper — HR Weekly Pack (Enterprise only) ──────────────
+
+async function generateHarperReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier !== 'enterprise') return null;
+
+  logger.log('harper', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Harper, the HR Director at Open Agency. You are people-first, strategic, and always thinking about culture and talent. Each week you produce an HR pack covering hiring pipeline, people ops updates, org health, and recommended actions. Practical and warm.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Harper', 'HR Director',
+    businessName, brief, tier,
+    'Produce the weekly HR pack. Cover: hiring pipeline summary, any open roles and recruitment progress, people ops recommendations, 3 culture/team health observations, and suggested HR actions for the week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('harper', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'harper', 'weekly-hr-pack', content);
+
+  try {
+    await sendTaskCompletionEmail({
+      email,
+      agentId: 'harper',
+      taskType: 'Weekly HR Pack',
+      summary: result.summary,
+    });
+  } catch (err) {
+    logger.log('harper', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('harper', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
 // ─── Run all reports for all clients ────────────────────────
 
 async function runMarcusReportsForAll() {
@@ -336,13 +521,56 @@ async function runNikitaDigestsForAll() {
   }
 }
 
+async function runLenaReportsForAll() {
+  const clients = await loadAllClients();
+  logger.log('cron', 'LENA_REPORTS_START', { clientCount: clients.length });
+  for (const c of clients) {
+    // Lena runs for growth + enterprise (Sales-adjacent, available via lead gen)
+    if (c.tier === 'starter') continue;
+    try { await generateLenaReport(c); } catch (e) { logger.log('cron', 'LENA_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runTheoReportsForAll() {
+  const clients = await loadAllClients();
+  logger.log('cron', 'THEO_REPORTS_START', { clientCount: clients.length });
+  for (const c of clients) {
+    if (c.tier === 'starter') continue;
+    try { await generateTheoReport(c); } catch (e) { logger.log('cron', 'THEO_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runLexReportsForAll() {
+  const clients = await loadAllClients();
+  logger.log('cron', 'LEX_REPORTS_START', { clientCount: clients.length });
+  for (const c of clients) {
+    try { await generateLexReport(c); } catch (e) { logger.log('cron', 'LEX_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runHarperReportsForAll() {
+  const clients = await loadAllClients();
+  logger.log('cron', 'HARPER_REPORTS_START', { clientCount: clients.length });
+  for (const c of clients) {
+    try { await generateHarperReport(c); } catch (e) { logger.log('cron', 'HARPER_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
 export {
   generateMarcusReport,
   generateZaraReport,
   generatePriyaReport,
   generateNikitaDigest,
+  generateLenaReport,
+  generateTheoReport,
+  generateLexReport,
+  generateHarperReport,
   runMarcusReportsForAll,
   runZaraReportsForAll,
   runPriyaReportsForAll,
   runNikitaDigestsForAll,
+  runLenaReportsForAll,
+  runTheoReportsForAll,
+  runLexReportsForAll,
+  runHarperReportsForAll,
 };
