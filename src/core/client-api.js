@@ -28,6 +28,15 @@ import {
   generateTheoReport,
   generateLexReport,
   generateHarperReport,
+  generateKaiReport,
+  generateMiaReport,
+  generateLunaReport,
+  generateRexReport,
+  generateIrisReport,
+  generateFelixReport,
+  generateEliReport,
+  generateNoraReport,
+  generateOttoReport,
 } from './client-reports.js';
 
 const MODEL = 'claude-sonnet-4-20250514';
@@ -95,7 +104,11 @@ const MessageSchema = z.object({
 
 const TriggerSchema = z.object({
   clientId: z.string().uuid(),
-  agentId: z.enum(['marcus', 'zara', 'priya', 'nikita', 'lena', 'theo', 'lex', 'harper']),
+  agentId: z.enum([
+    'marcus', 'zara', 'priya', 'nikita', 'lena', 'theo', 'lex', 'harper',
+    'kai', 'mia', 'luna', 'rex', 'iris', 'felix', 'eli', 'nora', 'otto',
+    'rio', 'nova', 'byte', 'cleo', 'sam', 'vera', 'cora', 'jules', 'drew', 'sage',
+  ]),
 });
 
 // ─── Mount All Client Routes ─────────────────────────────────

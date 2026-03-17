@@ -651,32 +651,46 @@ function createDashboardServer() {
 
   function _agentDisplayName(id) {
     const names = {
-      'nikita': 'Nikita', 'cfo': 'Marcus (CFO)', 'cto': 'Zara (CTO)',
-      'cmo': 'Priya (CMO)', 'dev-lead': 'Kai (Dev Lead)',
-      'architect': 'Architect Bot', 'frontend': 'Frontend Dev',
-      'backend': 'Backend Dev', 'fullstack': 'Fullstack Dev',
-      'qa': 'QA Engineer', 'code-review': 'Code Reviewer',
-      'sales-lead': 'Jordan (Sales)', 'closer': 'Closer Bot',
-      'lead-qualifier': 'Lead Qualifier', 'follow-up': 'Follow-Up Bot',
-      'proposal': 'Proposal Bot', 'creative-director': 'Nova (Creative)',
-      'designer': 'Iris (Designer)', 'video-editor': 'Finn (Video)',
-      'social-media': 'Jade (Social)', 'copywriter': 'Ash (Copy)',
+      // Leadership
+      'nikita': 'Nikita',
+      // Sales
+      'rex': 'Rex', 'lena': 'Lena', 'cleo': 'Cleo', 'sam': 'Sam',
+      // Marketing
+      'priya': 'Priya', 'mia': 'Mia', 'theo': 'Theo', 'luna': 'Luna',
+      // Development
+      'kai': 'Kai', 'rio': 'Rio', 'nova': 'Nova', 'byte': 'Byte',
+      // Finance
+      'marcus': 'Marcus', 'iris': 'Iris', 'felix': 'Felix',
+      // Creative
+      'zara': 'Zara', 'eli': 'Eli', 'nora': 'Nora',
+      // Operations
+      'otto': 'Otto', 'vera': 'Vera',
+      // Legal
+      'lex': 'Lex', 'cora': 'Cora', 'jules': 'Jules',
+      // HR
+      'harper': 'Harper', 'drew': 'Drew', 'sage': 'Sage',
+      // Legacy internal IDs (mapped to canonical names)
+      'cfo': 'Marcus', 'cto': 'Zara', 'cmo': 'Priya',
+      'dev-lead': 'Kai', 'sales-lead': 'Rex',
+      'creative-director': 'Zara',
     };
     return names[id] || id;
   }
 
   function _agentRole(id) {
     const roles = {
-      'nikita': 'Owner / CEO', 'cfo': 'CFO', 'cto': 'CTO', 'cmo': 'CMO',
-      'dev-lead': 'Dev Team Lead', 'architect': 'Architect',
-      'frontend': 'Frontend Dev', 'backend': 'Backend Dev',
-      'fullstack': 'Fullstack Dev', 'qa': 'QA Engineer',
-      'code-review': 'Code Reviewer', 'sales-lead': 'Sales Lead',
-      'closer': 'Closer', 'lead-qualifier': 'Lead Qualifier',
-      'follow-up': 'Follow-Up', 'proposal': 'Proposal Writer',
-      'creative-director': 'Creative Director', 'designer': 'Designer',
-      'video-editor': 'Video Editor', 'social-media': 'Social Media',
-      'copywriter': 'Copywriter',
+      'nikita': 'CEO',
+      'rex': 'Sales Director', 'lena': 'Lead Generation', 'cleo': 'Outreach', 'sam': 'CRM Management',
+      'priya': 'Marketing Director', 'mia': 'Social Media', 'theo': 'SEO', 'luna': 'Paid Ads',
+      'kai': 'Dev Lead', 'rio': 'Frontend Dev', 'nova': 'Backend Dev', 'byte': 'QA',
+      'marcus': 'Finance Director', 'iris': 'Bookkeeping', 'felix': 'Forecasting',
+      'zara': 'Creative Director', 'eli': 'Copywriter', 'nora': 'Graphic Design',
+      'otto': 'Operations Manager', 'vera': 'Admin',
+      'lex': 'Legal Director', 'cora': 'Compliance', 'jules': 'Documentation',
+      'harper': 'HR Director', 'drew': 'Talent', 'sage': 'People Ops',
+      // Legacy
+      'cfo': 'Finance Director', 'cto': 'Creative Director', 'cmo': 'Marketing Director',
+      'dev-lead': 'Dev Lead', 'sales-lead': 'Sales Director',
     };
     return roles[id] || 'Agent';
   }

@@ -487,6 +487,330 @@ async function generateHarperReport(clientObj) {
   return result;
 }
 
+// ─── Kai — Dev Sprint Report ─────────────────────────────────
+
+async function generateKaiReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier === 'starter') return null;
+  logger.log('kai', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Kai, the Dev Lead at Open Agency. You are decisive, technically sharp, and ship-focused. Each week you review the client's tech project, break down what needs building, and assign work to the team. Your reports are precise, prioritised, and include real code direction.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Kai', 'Dev Lead',
+    businessName, brief, tier,
+    'Produce the weekly dev sprint report. Cover: sprint goal and top 3 technical priorities, feature breakdown with estimated effort, any technical debt to address, blockers to flag, and recommended architecture decisions for the week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('kai', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'kai', 'weekly-dev-sprint', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'kai', taskType: 'Weekly Dev Sprint Report', summary: result.summary });
+  } catch (err) {
+    logger.log('kai', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('kai', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Mia — Social Media Report ───────────────────────────────
+
+async function generateMiaReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier === 'starter') return null;
+  logger.log('mia', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Mia, the Social Media specialist at Open Agency. You live on social media, know every platform inside out, and always write content that gets engagement. You write posts, build schedules, and track what's working. Your tone is sharp, current, and always on brand.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Mia', 'Social Media Specialist',
+    businessName, brief, tier,
+    'Produce the weekly social media report. Include: 5 ready-to-post social posts (with platform, caption, and hashtags), engagement performance summary, 3 trending topics to leverage, and this week\'s posting schedule recommendation.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('mia', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'mia', 'weekly-social-media', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'mia', taskType: 'Weekly Social Media Report', summary: result.summary });
+  } catch (err) {
+    logger.log('mia', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('mia', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Luna — Paid Ads Report ──────────────────────────────────
+
+async function generateLunaReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier === 'starter') return null;
+  logger.log('luna', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Luna, the Paid Ads specialist at Open Agency. You are data-obsessed, ROAS-driven, and always optimising. You manage ad budgets, write ad copy, set up audience targeting, and report on performance with precision. You never waste ad spend.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Luna', 'Paid Ads Specialist',
+    businessName, brief, tier,
+    'Produce the weekly paid ads report. Cover: current campaign performance (CTR, CPC, ROAS estimates), 3 ad copy variations to test, audience targeting recommendations, budget allocation advice, and top 3 optimisation actions for this week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('luna', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'luna', 'weekly-paid-ads', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'luna', taskType: 'Weekly Paid Ads Report', summary: result.summary });
+  } catch (err) {
+    logger.log('luna', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('luna', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Rex — Sales Strategy Report ────────────────────────────
+
+async function generateRexReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier !== 'enterprise') return null;
+  logger.log('rex', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Rex, the Sales Director at Open Agency. You are competitive, pipeline-obsessed, and close deals. Each week you review the sales strategy, prospect pipeline, outreach performance, and identify new opportunities. Your reports drive revenue.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Rex', 'Sales Director',
+    businessName, brief, tier,
+    'Produce the weekly sales strategy report. Cover: pipeline health and deal stages, 5 highest-priority prospects to focus on, outreach strategy for the week, objection handling tips for the most common blockers, and 3 actions to accelerate revenue this week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('rex', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'rex', 'weekly-sales-strategy', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'rex', taskType: 'Weekly Sales Strategy Report', summary: result.summary });
+  } catch (err) {
+    logger.log('rex', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('rex', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Iris — Bookkeeping Report ───────────────────────────────
+
+async function generateIrisReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier !== 'enterprise') return null;
+  logger.log('iris', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Iris, the Bookkeeping specialist at Open Agency. You are meticulous, organised, and never let a number slide. Each week you categorise expenses, track invoices, and flag anything that looks off. Your reports give clients a clear view of their money.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Iris', 'Bookkeeping Specialist',
+    businessName, brief, tier,
+    'Produce the weekly bookkeeping report. Cover: expense categories and totals, outstanding invoices to chase, any unusual or uncategorised transactions, recommendations for cost efficiency, and a clean summary of current financial position.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('iris', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'iris', 'weekly-bookkeeping', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'iris', taskType: 'Weekly Bookkeeping Report', summary: result.summary });
+  } catch (err) {
+    logger.log('iris', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('iris', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Felix — Forecasting Report ─────────────────────────────
+
+async function generateFelixReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier !== 'enterprise') return null;
+  logger.log('felix', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Felix, the Financial Forecasting specialist at Open Agency. You are analytical, forward-thinking, and always model the risks. Each week you build revenue projections, scenario models, and give clients a clear-eyed view of where they're heading financially.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Felix', 'Financial Forecaster',
+    businessName, brief, tier,
+    'Produce the weekly financial forecast. Include: 30/60/90-day revenue projection with assumptions, three scenarios (base / bull / bear), key metrics to track, top 2 financial risks to monitor, and recommended financial moves this week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('felix', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'felix', 'weekly-forecast', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'felix', taskType: 'Weekly Financial Forecast', summary: result.summary });
+  } catch (err) {
+    logger.log('felix', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('felix', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Eli — Copywriting Report ────────────────────────────────
+
+async function generateEliReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier === 'starter') return null;
+  logger.log('eli', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Eli, the Copywriter at Open Agency. You write words that convert. Landing pages, email sequences, ad copy, sales scripts — you make every word earn its place. Your copy is sharp, benefits-focused, and always speaks directly to the customer.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Eli', 'Copywriter',
+    businessName, brief, tier,
+    'Produce the weekly copywriting output. Deliver: 3 email subject line variants (for a promotional campaign), one full landing page headline + subheadline + CTA set, 2 ad copy variants (short-form), and 3 messaging angles to test this week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('eli', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'eli', 'weekly-copy', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'eli', taskType: 'Weekly Copywriting Output', summary: result.summary });
+  } catch (err) {
+    logger.log('eli', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('eli', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Nora — Graphic Design Brief ─────────────────────────────
+
+async function generateNoraReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier === 'starter') return null;
+  logger.log('nora', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Nora, the Graphic Design specialist at Open Agency. You think visually, brief with precision, and make brands look exceptional. Each week you produce design briefs, generate visual direction, and guide the creative team on what to make and how it should look.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Nora', 'Graphic Design Specialist',
+    businessName, brief, tier,
+    'Produce the weekly design brief. Include: 3 design assets to create this week (with brief, dimensions, purpose, and visual style direction for each), brand colour/font reminders, any visual inconsistencies to fix, and top design priority for the week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('nora', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'nora', 'weekly-design-brief', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'nora', taskType: 'Weekly Design Brief', summary: result.summary });
+  } catch (err) {
+    logger.log('nora', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('nora', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
+// ─── Otto — Operations Report ────────────────────────────────
+
+async function generateOttoReport(clientObj) {
+  const { id: clientId, email, businessName, tier, brief } = clientObj;
+  if (tier !== 'enterprise') return null;
+  logger.log('otto', 'REPORT_START', { clientId, businessName });
+
+  const systemPrompt = `You are Otto, the Operations Manager at Open Agency. You are systematic, efficient, and obsessed with removing friction. You build SOPs, automate workflows, and ensure the business runs smoothly. Your reports spot inefficiencies and provide clear operational improvements.`;
+
+  const userPrompt = buildAgentPrompt(
+    'Otto', 'Operations Manager',
+    businessName, brief, tier,
+    'Produce the weekly operations report. Cover: top 3 operational inefficiencies identified, 2 SOPs to create or update, workflow automation opportunities, resource utilisation summary, and 3 operational quick wins for this week.'
+  );
+
+  let result;
+  try {
+    result = await callAgent(systemPrompt, userPrompt);
+  } catch (err) {
+    logger.log('otto', 'REPORT_FAILED', { clientId, error: err.message });
+    throw err;
+  }
+
+  const content = JSON.stringify(result);
+  const report = await saveReport(clientId, 'otto', 'weekly-operations', content);
+
+  try {
+    await sendTaskCompletionEmail({ email, agentId: 'otto', taskType: 'Weekly Operations Report', summary: result.summary });
+  } catch (err) {
+    logger.log('otto', 'EMAIL_FAILED', { clientId, error: err.message });
+  }
+
+  logger.log('otto', 'REPORT_DONE', { clientId, reportId: report?.id });
+  return result;
+}
+
 // ─── Run all reports for all clients ────────────────────────
 
 async function runMarcusReportsForAll() {
@@ -556,6 +880,69 @@ async function runHarperReportsForAll() {
   }
 }
 
+async function runKaiReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateKaiReport(c); } catch (e) { logger.log('cron', 'KAI_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runMiaReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateMiaReport(c); } catch (e) { logger.log('cron', 'MIA_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runLunaReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateLunaReport(c); } catch (e) { logger.log('cron', 'LUNA_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runRexReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateRexReport(c); } catch (e) { logger.log('cron', 'REX_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runIrisReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateIrisReport(c); } catch (e) { logger.log('cron', 'IRIS_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runFelixReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateFelixReport(c); } catch (e) { logger.log('cron', 'FELIX_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runEliReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateEliReport(c); } catch (e) { logger.log('cron', 'ELI_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runNoraReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateNoraReport(c); } catch (e) { logger.log('cron', 'NORA_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
+async function runOttoReportsForAll() {
+  const clients = await loadAllClients();
+  for (const c of clients) {
+    try { await generateOttoReport(c); } catch (e) { logger.log('cron', 'OTTO_REPORT_ERROR', { clientId: c.id, error: e.message }); }
+  }
+}
+
 export {
   generateMarcusReport,
   generateZaraReport,
@@ -565,6 +952,15 @@ export {
   generateTheoReport,
   generateLexReport,
   generateHarperReport,
+  generateKaiReport,
+  generateMiaReport,
+  generateLunaReport,
+  generateRexReport,
+  generateIrisReport,
+  generateFelixReport,
+  generateEliReport,
+  generateNoraReport,
+  generateOttoReport,
   runMarcusReportsForAll,
   runZaraReportsForAll,
   runPriyaReportsForAll,
@@ -573,4 +969,13 @@ export {
   runTheoReportsForAll,
   runLexReportsForAll,
   runHarperReportsForAll,
+  runKaiReportsForAll,
+  runMiaReportsForAll,
+  runLunaReportsForAll,
+  runRexReportsForAll,
+  runIrisReportsForAll,
+  runFelixReportsForAll,
+  runEliReportsForAll,
+  runNoraReportsForAll,
+  runOttoReportsForAll,
 };

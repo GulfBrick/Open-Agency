@@ -28,6 +28,15 @@ import {
   runTheoReportsForAll,
   runLexReportsForAll,
   runHarperReportsForAll,
+  runKaiReportsForAll,
+  runMiaReportsForAll,
+  runLunaReportsForAll,
+  runRexReportsForAll,
+  runIrisReportsForAll,
+  runFelixReportsForAll,
+  runEliReportsForAll,
+  runNoraReportsForAll,
+  runOttoReportsForAll,
 } from './client-reports.js';
 import { getDb, isDbAvailable } from './db.js';
 
@@ -201,8 +210,71 @@ function startCronJobs() {
     catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'xp-updates', error: e.message }); }
   }, { timezone: 'UTC' });
 
-  logger.log('cron', 'STARTED', { jobs: 10 });
-  console.log('  Cron Jobs ........... OK  (10 jobs scheduled)');
+  // 11. Kai dev sprint — every Tuesday at 09:30 UTC
+  cron.schedule('30 9 * * 2', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'kai-dev-sprint' });
+    try { await runKaiReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'kai-dev-sprint', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 12. Mia social media — every Monday at 09:30 UTC
+  cron.schedule('30 9 * * 1', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'mia-social-media' });
+    try { await runMiaReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'mia-social-media', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 13. Luna paid ads — every Wednesday at 09:00 UTC
+  cron.schedule('0 9 * * 3', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'luna-paid-ads' });
+    try { await runLunaReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'luna-paid-ads', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 14. Rex sales strategy — every Monday at 08:30 UTC (Enterprise only, filtered in fn)
+  cron.schedule('30 8 * * 1', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'rex-sales-strategy' });
+    try { await runRexReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'rex-sales-strategy', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 15. Iris bookkeeping — every Wednesday at 08:00 UTC (Enterprise only)
+  cron.schedule('0 8 * * 3', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'iris-bookkeeping' });
+    try { await runIrisReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'iris-bookkeeping', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 16. Felix forecasting — every Thursday at 08:00 UTC (Enterprise only)
+  cron.schedule('0 8 * * 4', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'felix-forecasting' });
+    try { await runFelixReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'felix-forecasting', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 17. Eli copywriting — every Tuesday at 10:00 UTC (Growth + Enterprise)
+  cron.schedule('0 10 * * 2', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'eli-copy' });
+    try { await runEliReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'eli-copy', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 18. Nora design brief — every Thursday at 09:00 UTC (Growth + Enterprise)
+  cron.schedule('0 9 * * 4', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'nora-design' });
+    try { await runNoraReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'nora-design', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  // 19. Otto operations — every Friday at 08:00 UTC (Enterprise only)
+  cron.schedule('0 8 * * 5', async () => {
+    logger.log('cron', 'JOB_TRIGGERED', { job: 'otto-operations' });
+    try { await runOttoReportsForAll(); }
+    catch (e) { logger.log('cron', 'JOB_FAILED', { job: 'otto-operations', error: e.message }); }
+  }, { timezone: 'UTC' });
+
+  logger.log('cron', 'STARTED', { jobs: 19 });
+  console.log('  Cron Jobs ........... OK  (19 jobs scheduled)');
 }
 
 export { startCronJobs, runXpUpdates };
