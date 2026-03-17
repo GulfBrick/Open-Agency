@@ -27,6 +27,8 @@ import { messageDispatcher } from '../core/message-dispatcher.js';
 import { agentReporter } from '../core/agent-reporter.js';
 import { mountWhopWebhook } from '../core/whop-webhook.js';
 import { mountGitIntegrationRoutes } from '../core/git-integration.js';
+import { mountClientApiRoutes } from '../core/client-api.js';
+import { startCronJobs } from '../core/cron-jobs.js';
 import rateLimit from 'express-rate-limit';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -334,6 +336,9 @@ function createDashboardServer() {
 
   // ─── Git Integration Routes ───────────────────────────────
   mountGitIntegrationRoutes(app);
+
+  // ─── Client API Routes (full REST) ───────────────────────
+  mountClientApiRoutes(app);
 
   // ─── API: Nikita Chat Message ──────────────────────────────
 

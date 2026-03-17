@@ -44,6 +44,7 @@ import { agentPersonas } from './core/agent-personas.js';
 import { agentConversation } from './core/agent-conversation.js';
 import { workflowEngine } from './core/workflow-engine.js';
 import { clientOnboarding } from './core/client-onboarding.js';
+import { startCronJobs } from './core/cron-jobs.js';
 // telegramInbound disabled — OpenClaw handles Telegram polling; running a second poller causes 409 conflicts
 // import { telegramInbound } from './core/telegram-inbound.js';
 
@@ -273,6 +274,10 @@ async function boot() {
   const dashboard = createDashboardServer();
   await dashboard.start();
   logger.log('system', 'DASHBOARD_STARTED', { port: 3001 });
+
+  // Start cron jobs (real Claude agent reports for all clients)
+  startCronJobs();
+  logger.log('system', 'CRON_JOBS_STARTED', {});
 
   // Print the startup summary
   printStartupSummary(bootCount, csuiteAgents);
