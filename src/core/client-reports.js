@@ -11,7 +11,7 @@ import { getDb, isDbAvailable } from './db.js';
 import { logger } from './logger.js';
 import { sendTaskCompletionEmail } from './email.js';
 
-const MODEL = 'claude-sonnet-4-20250514';
+const MODEL = 'claude-haiku-4-5';
 const client = new Anthropic();
 
 // ─── Agent Prompt Builder ────────────────────────────────────

@@ -39,7 +39,7 @@ import {
   generateOttoReport,
 } from './client-reports.js';
 
-const MODEL = 'claude-sonnet-4-20250514';
+const MODEL = 'claude-haiku-4-5';
 const anthropic = new Anthropic();
 
 // ─── All 27 Agents (canonical list) ─────────────────────────
