@@ -102,6 +102,12 @@ const MessageSchema = z.object({
   message: z.string().min(1).max(4000),
 });
 
+const UpdateClientSchema = z.object({
+  brief: z.string().max(3000).optional(),
+  timezone: z.string().max(60).optional(),
+  businessName: z.string().min(1).max(200).optional(),
+});
+
 const TriggerSchema = z.object({
   clientId: z.string().uuid(),
   agentId: z.enum([
@@ -138,6 +144,113 @@ function mountClientApiRoutes(app) {
       createdAt: c.createdAt,
       assignedAgentCount: assignedAgentIds.length,
     });
+  });
+
+  // PUT /api/clients/:id — update brief / timezone / businessName
+  app.put('/api/clients/:id', requireClient, async (req, res) => {
+    const parsed = UpdateClientSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Invalid request', issues: parsed.error.issues });
+
+    const db = getDb();
+    try {
+      const updated = await db.client.update({
+        where: { id: req.params.id },
+        data: parsed.data,
+        select: { id: true, email: true, businessName: true, tier: true, brief: true, timezone: true, createdAt: true },
+      });
+
+      await db.auditLog.create({
+        data: {
+          clientId: req.params.id,
+          agentId: 'system',
+          action: 'client_updated',
+          detail: { fields: Object.keys(parsed.data) },
+          ip: req.ip,
+        },
+      });
+
+      logger.log('client-api', 'CLIENT_UPDATED', { clientId: req.params.id, fields: Object.keys(parsed.data) });
+      res.json(updated);
+    } catch (err) {
+      logger.log('client-api', 'UPDATE_ERROR', { error: err.message });
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
+  // POST /api/clients/:id/kickoff — fire initial agent reports for a new client
+  // Runs Nikita digest + tier-appropriate core agents. Fire-and-forget.
+  app.post('/api/clients/:id/kickoff', requireClient, async (req, res) => {
+    const db = getDb();
+    const c = req.clientRecord;
+
+    // Determine which agents to kick off by tier
+    const KICKOFF_AGENTS = {
+      starter: ['nikita'],
+      growth:  ['nikita', 'marcus', 'priya'],
+      enterprise: ['nikita', 'marcus', 'priya', 'zara'],
+    };
+
+    const agents = KICKOFF_AGENTS[c.tier] || KICKOFF_AGENTS.starter;
+
+    logger.log('client-api', 'KICKOFF_STARTED', { clientId: c.id, tier: c.tier, agents });
+
+    // Create pending task records
+    const tasks = await Promise.all(agents.map(agentId =>
+      db.task.create({
+        data: { clientId: c.id, agentId, type: 'kickoff', status: 'running', input: { source: 'kickoff' } },
+      })
+    ));
+
+    await db.auditLog.create({
+      data: {
+        clientId: c.id,
+        agentId: 'system',
+        action: 'kickoff_started',
+        detail: { agents, taskCount: tasks.length },
+        ip: req.ip,
+      },
+    });
+
+    // Return immediately, run reports in background
+    res.json({ ok: true, agents, taskCount: tasks.length, message: 'Your team is spinning up. Reports will appear shortly.' });
+
+    // Background: run each agent report
+    (async () => {
+      for (let i = 0; i < agents.length; i++) {
+        const agentId = agents[i];
+        const task = tasks[i];
+        try {
+          let result;
+          if (agentId === 'nikita')  result = await generateNikitaDigest(c);
+          else if (agentId === 'marcus') result = await generateMarcusReport(c);
+          else if (agentId === 'priya')  result = await generatePriyaReport(c);
+          else if (agentId === 'zara')   result = await generateZaraReport(c);
+
+          await db.task.update({
+            where: { id: task.id },
+            data: { status: 'complete', output: result, completedAt: new Date() },
+          });
+
+          // Award XP to agent
+          const agentRow = await db.clientAgent.findFirst({ where: { clientId: c.id, agentId } });
+          if (agentRow) {
+            const newXp = agentRow.xp + 25;
+            const newLevel = Math.floor(newXp / 100) + 1;
+            await db.clientAgent.update({ where: { id: agentRow.id }, data: { xp: newXp, level: newLevel } });
+          }
+
+          logger.log('client-api', 'KICKOFF_AGENT_DONE', { clientId: c.id, agentId });
+        } catch (err) {
+          await db.task.update({
+            where: { id: task.id },
+            data: { status: 'failed', output: { error: err.message }, completedAt: new Date() },
+          });
+          logger.log('client-api', 'KICKOFF_AGENT_FAILED', { clientId: c.id, agentId, error: err.message });
+        }
+      }
+
+      logger.log('client-api', 'KICKOFF_COMPLETE', { clientId: c.id, agents });
+    })();
   });
 
   // GET /api/clients/:id/agents — agents + XP/level
