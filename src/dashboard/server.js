@@ -33,7 +33,7 @@ import { startCronJobs } from '../core/cron-jobs.js';
 import rateLimit from 'express-rate-limit';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 function createDashboardServer() {
   const app = express();
